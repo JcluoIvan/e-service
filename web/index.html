@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Document</title>
+        <style>
+            [v-cloak] {
+                opacity: 0 !important;
+            }
+        </style>
+    </head>
+    <body>
+        Hello World
+        <div id="app" v-cloak>
+            <pre>ID: {{ id }}</pre>
+            <input v-model="target" />
+            <button @click.prevent="connect()">Connect</button>
+            <ul>
+                <li v-for="(msg, i) in messages" :key="i">{{ msg }}</li>
+            </ul>
+            <form @submit.prevent="send">
+                <input type="text" v-model="content"/>
+                <button>Send</button>
+            </form @submit.prevent="send">
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.0.0/peerjs.min.js"></script>
+        <script src="/assets/js/app.js"></script>
+    </body>
+</html>
