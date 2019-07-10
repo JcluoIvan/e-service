@@ -1,0 +1,35 @@
+{
+    "type": "mysql",
+    "logging": true,
+    "entities": ["./dist/entity/*.js"],
+    "migrationsTableName": "custom_migration_table",
+    "migrations": ["dist/migration/*.js"],
+    "cli": {
+        "migrationsDir": "src/migration"
+    },
+    "replication": {
+        "master": {
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "",
+            "database": "chat-rtc"
+        },
+        "slaves": [
+            {
+                "host": "127.0.0.1",
+                "port": 3306,
+                "username": "root",
+                "password": "",
+                "database": "chat-rtc"
+            },
+            {
+                "host": "127.0.0.1",
+                "port": 3306,
+                "username": "root",
+                "password": "",
+                "database": "chat-rtc"
+            }
+        ]
+    }
+}

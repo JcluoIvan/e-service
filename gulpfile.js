@@ -1,5 +1,6 @@
 const gulp = require('gulp');
 const tsb = require('gulp-tsb');
+const importify = require('./build/importify');
 const tsconfig = require('./tsconfig.json');
 const PATHS = {
     ts: {
@@ -8,14 +9,15 @@ const PATHS = {
     },
 };
 const compilation = tsb.create({
-    ...tsconfig,
+    ...tsconfig.compilerOptions,
 });
 
 gulp.task('build', function() {});
-
 function buildTS() {
     return gulp
         .src(PATHS.ts.src)
+        // .pipe(importify(...tsconfig.compilerOptions))
+        .pipe(importify())
         .pipe(compilation())
         .pipe(gulp.dest(PATHS.ts.dest));
 }

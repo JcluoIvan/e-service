@@ -6,13 +6,16 @@
         "strict": true,
         "moduleResolution": "node",
         "baseUrl": "./",
-        "paths": {
-            "src/*": ["./src/*"]
-        },
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "typeRoots": ["src/types", "node_modules/@types"],
         "allowSyntheticDefaultImports": true,
         "inlineSourceMap": true,
-        "inlineSources": true
+        "inlineSources": true,
+        "paths": {
+            "@/*": ["src/*"]
+        }
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+    "exclude": ["node_modules"]
 }
