@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "rootDir": "./src",
+        "strict": true,
+        "moduleResolution": "node",
+        "baseUrl": "./",
+        "paths": {
+            "src/*": ["./src/*"]
+        },
+        "typeRoots": ["src/types", "node_modules/@types"],
+        "allowSyntheticDefaultImports": true,
+        "inlineSourceMap": true,
+        "inlineSources": true
+    },
+    "include": ["src/**/*"]
+}

@@ -1,15 +1,14 @@
 const gulp = require('gulp');
 const tsb = require('gulp-tsb');
-const tsconfig = require('./tslint.json');
+const tsconfig = require('./tsconfig.json');
 const PATHS = {
     ts: {
         src: './src/**/*.ts',
-        dest: 'dist'
-    }
+        dest: 'dist',
+    },
 };
-
 const compilation = tsb.create({
-    ...tsconfig
+    ...tsconfig,
 });
 
 gulp.task('build', function() {});
