@@ -1,7 +1,7 @@
 {
     "files.exclude": {
         "**/.git": true,
-        "**/node_modules/*": true,
+        "**/node_modules/*": true
     },
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
@@ -9,5 +9,6 @@
     "html.format.wrapLineLength": 0,
     "javascript.implicitProjectConfig.experimentalDecorators": true,
     "editor.rulers": [80, 120],
-    "window.title": "${dirty}${rootName}${separator}${activeEditorMedium}"
+    "window.title": "${dirty}${rootName}${separator}${activeEditorMedium}",
+    "typescript.preferences.importModuleSpecifier": "relative"
 }

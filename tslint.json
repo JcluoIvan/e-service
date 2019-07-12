@@ -4,9 +4,6 @@
     "linterOptions": {
         "exclude": ["node_modules/**"]
     },
-    "paths": {
-        "@/*": ["src/*"]
-    },
     "rules": {
         "quotemark": [true, "single"],
         "indent": [true, "spaces", 4],

@@ -4,8 +4,8 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "gulp",
-        "dev": "supervisor -w dist dist/index",
+        "watch": "gulp",
+        "start": "supervisor -w dist dist/index",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
@@ -21,10 +21,11 @@
     "dependencies": {
         "express": "4.17.1",
         "typeorm": "0.2.18",
-        "wrtc": "0.4.1",
+        "socket.io": "2.2.0",
         "dotenv": "8.0.0",
         "mysql": "2.17.1",
-        "log4js": "4.5.0"
+        "log4js": "4.5.0",
+        "moment": "2.24.0"
     },
     "devDependencies": {
         "@types/express": "4.17.0",
@@ -33,10 +34,12 @@
         "@types/dotenv": "6.1.1",
         "@types/mysql": "2.15.6",
         "@types/log4js": "2.3.5",
+        "@types/socket.io": "2.1.2",
+        "@types/moment": "2.13.0",
         "gulp-tslint": "8.1.4",
         "typescript": "3.5.3",
         "gulp": "4.0.2",
-        "gulp-tsb": "^2.0.7",
+        "gulp-typescript": "5.0.1",
         "tslint": "5.18.0",
         "supervisor": "0.12.0",
         "through2": "3.0.1"

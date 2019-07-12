@@ -11,10 +11,7 @@
         "typeRoots": ["src/types", "node_modules/@types"],
         "allowSyntheticDefaultImports": true,
         "inlineSourceMap": true,
-        "inlineSources": true,
-        "paths": {
-            "@/*": ["src/*"]
-        }
+        "inlineSources": true
     },
     "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
     "exclude": ["node_modules"]
