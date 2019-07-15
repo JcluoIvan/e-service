@@ -1,15 +1,25 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn, Unique } from 'typeorm';
+import { Firm } from './Firm';
+
+export enum UserRole {
+    /* 主管 */
+    Supervisor = 'supervisor',
+    /* 專員 */
+    Executive = 'executive',
+}
 
 @Entity()
+@Unique(['username', 'firm'])
 export class User {
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({
+        unsigned: true,
+    })
     public id!: number;
 
     @Column({
         type: 'varchar',
         length: 50,
-        nullable: true,
-        default: null,
+        nullable: false,
     })
     public username!: string | null;
 
@@ -23,18 +33,29 @@ export class User {
     @Column({
         type: 'varchar',
         length: 20,
-        nullable: true,
-        default: null,
+        nullable: false,
     })
-    public name!: string | null;
+    public name!: string;
+
+    @Column({
+        type: 'enum',
+        enum: UserRole,
+    })
+    public role!: UserRole;
 
     @Column({
         type: 'varchar',
         length: 50,
-        nullable: true,
+        nullable: false,
         default: null,
     })
     public token!: string | null;
+
+    @OneToOne(() => Firm)
+    @JoinColumn({
+        name: 'firm_id',
+    })
+    public firm!: Firm;
 
     @CreateDateColumn({
         name: 'updated_at',
@@ -51,4 +72,8 @@ export class User {
         type: 'timestamp',
     })
     public createdAt!: string;
+
+    public checkPassword(password: string) {
+        return this.password === password;
+    }
 }

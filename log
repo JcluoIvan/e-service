@@ -1,0 +1,1020 @@
+[2019-07-15T10:37:53.114] [INFO] default - Server Start on 3000
+[2019-07-15T10:54:37.401] [INFO] default - Server Start on 3000
+[2019-07-15T10:55:27.862] [INFO] default - has connection
+[2019-07-15T10:59:39.782] [INFO] default - has connection
+[2019-07-15T10:59:40.834] [INFO] default - has connection
+[2019-07-15T11:02:53.796] [INFO] default - has connection
+[2019-07-15T11:09:19.293] [INFO] default - has connection
+[2019-07-15T11:12:14.178] [INFO] default - has connection
+[2019-07-15T11:12:38.283] [INFO] default - has connection
+[2019-07-15T11:14:53.778] [INFO] default - has connection
+[2019-07-15T11:15:04.233] [INFO] default - has connection
+[2019-07-15T11:15:34.730] [INFO] default - has connection
+[2019-07-15T11:19:29.735] [INFO] default - has connection
+[2019-07-15T11:19:34.554] [INFO] default - has connection
+[2019-07-15T11:20:18.865] [INFO] default - has connection
+[2019-07-15T11:20:47.887] [INFO] default - has connection
+[2019-07-15T11:21:05.820] [INFO] default - has connection
+[2019-07-15T11:21:18.556] [INFO] default - has connection
+[2019-07-15T11:21:47.410] [INFO] default - has connection
+[2019-07-15T11:24:07.970] [INFO] default - has connection
+[2019-07-15T11:24:12.845] [INFO] default - has connection
+[2019-07-15T11:27:15.486] [INFO] default - has connection
+[2019-07-15T11:27:27.670] [INFO] default - has connection
+[2019-07-15T11:27:51.160] [INFO] default - has connection
+[2019-07-15T11:31:46.056] [INFO] default - has connection
+[2019-07-15T11:34:26.990] [INFO] default - has connection
+[2019-07-15T11:34:37.792] [INFO] default - has connection
+[2019-07-15T11:35:11.644] [INFO] default - has connection
+[2019-07-15T11:48:12.113] [INFO] default - has connection
+[2019-07-15T11:56:36.356] [INFO] default - has connection
+[2019-07-15T11:59:16.185] [INFO] default - has connection
+[2019-07-15T11:59:41.115] [INFO] default - has connection
+[2019-07-15T12:01:29.921] [INFO] default - Server Start on 3000
+[2019-07-15T12:01:30.656] [INFO] default - has connection
+[2019-07-15T12:01:55.892] [INFO] default - Server Start on 3000
+[2019-07-15T12:01:56.150] [INFO] default - has connection
+[2019-07-15T12:01:58.017] [INFO] default - undefined
+[2019-07-15T12:02:09.008] [INFO] default - undefined
+[2019-07-15T12:02:55.925] [INFO] default - Server Start on 3000
+[2019-07-15T12:02:56.185] [INFO] default - has connection
+[2019-07-15T12:03:02.924] [INFO] default - Server Start on 3000
+[2019-07-15T12:03:03.104] [INFO] default - has connection
+[2019-07-15T12:38:48.981] [INFO] default - Server Start on 3000
+[2019-07-15T12:38:50.413] [INFO] default - has connection
+[2019-07-15T12:39:58.806] [INFO] default - undefined
+[2019-07-15T12:40:57.915] [INFO] default - Server Start on 3000
+[2019-07-15T12:40:58.262] [INFO] default - has connection
+[2019-07-15T12:41:00.672] [INFO] default - undefined
+[2019-07-15T12:41:44.957] [INFO] default - Server Start on 3000
+[2019-07-15T12:41:45.166] [INFO] default - has connection
+[2019-07-15T12:42:20.951] [INFO] default - Server Start on 3000
+[2019-07-15T12:42:21.368] [INFO] default - has connection
+[2019-07-15T12:42:48.944] [INFO] default - Server Start on 3000
+[2019-07-15T12:42:49.611] [INFO] default - has connection
+[2019-07-15T12:42:50.461] [INFO] default - undefined
+[2019-07-15T12:44:28.100] [INFO] default - Server Start on 3000
+[2019-07-15T12:44:28.409] [INFO] default - has connection
+[2019-07-15T12:44:30.998] [INFO] default - Server Start on 3000
+[2019-07-15T12:44:31.139] [INFO] default - has connection
+[2019-07-15T12:44:32.046] [INFO] default - undefined
+[2019-07-15T12:44:32.047] [ERROR] default - Error: invalid username or password
+[2019-07-15T12:45:20.004] [INFO] default - Server Start on 3000
+[2019-07-15T12:45:20.093] [INFO] default - has connection
+[2019-07-15T12:45:25.018] [INFO] default - Server Start on 3000
+[2019-07-15T12:45:25.126] [INFO] default - has connection
+[2019-07-15T12:45:26.901] [ERROR] default - Error: invalid username or password
+[2019-07-15T12:46:02.009] [INFO] default - Server Start on 3000
+[2019-07-15T12:46:02.366] [INFO] default - has connection
+[2019-07-15T12:46:03.486] [ERROR] default - Error: invalid username or password
+[2019-07-15T12:46:13.572] [ERROR] default - Error: invalid username or password
+[2019-07-15T12:46:26.015] [INFO] default - Server Start on 3000
+[2019-07-15T12:46:26.102] [INFO] default - has connection
+[2019-07-15T12:46:28.125] [ERROR] default - Error: Cannot read property 'catch' of undefined
+[2019-07-15T12:48:39.083] [INFO] default - Server Start on 3000
+[2019-07-15T12:48:39.624] [INFO] default - has connection
+[2019-07-15T12:48:47.236] [INFO] default - has connection
+[2019-07-15T12:50:52.139] [INFO] default - Server Start on 3000
+[2019-07-15T12:50:52.746] [INFO] default - has connection
+[2019-07-15T12:52:32.184] [INFO] default - Server Start on 3000
+[2019-07-15T12:52:32.279] [INFO] default - has connection
+[2019-07-15T12:52:41.214] [INFO] default - Server Start on 3000
+[2019-07-15T12:52:41.464] [INFO] default - has connection
+[2019-07-15T12:53:13.189] [INFO] default - Server Start on 3000
+[2019-07-15T12:53:13.519] [INFO] default - has connection
+[2019-07-15T12:56:16.491] [INFO] default - Server Start on 3000
+[2019-07-15T12:56:16.975] [INFO] default - has connection
+[2019-07-15T12:56:35.292] [INFO] default - Server Start on 3000
+[2019-07-15T12:56:35.799] [INFO] default - has connection
+[2019-07-15T12:57:28.320] [INFO] default - Server Start on 3000
+[2019-07-15T12:57:28.418] [INFO] default - has connection
+[2019-07-15T12:59:03.296] [INFO] default - Server Start on 3000
+[2019-07-15T12:59:04.116] [INFO] default - has connection
+[2019-07-15T12:59:27.384] [INFO] default - Server Start on 3000
+[2019-07-15T12:59:27.488] [INFO] default - has connection
+[2019-07-15T12:59:30.385] [INFO] default - Server Start on 3000
+[2019-07-15T12:59:30.655] [INFO] default - has connection
+[2019-07-15T12:59:40.342] [INFO] default - Server Start on 3000
+[2019-07-15T12:59:40.851] [INFO] default - has connection
+[2019-07-15T12:59:53.346] [INFO] default - Server Start on 3000
+[2019-07-15T12:59:53.456] [INFO] default - has connection
+[2019-07-15T12:59:55.336] [INFO] default - Server Start on 3000
+[2019-07-15T12:59:55.750] [INFO] default - has connection
+[2019-07-15T12:59:56.903] [ERROR] default - Error: invalid username or password
+[2019-07-15T13:00:20.365] [INFO] default - Server Start on 3000
+[2019-07-15T13:00:20.966] [INFO] default - has connection
+[2019-07-15T13:00:21.833] [ERROR] default - Error: invalid username or password
+[2019-07-15T14:02:30.532] [INFO] default - Server Start on 3000
+[2019-07-15T14:02:31.404] [INFO] default - has connection
+[2019-07-15T14:02:59.419] [INFO] default - Server Start on 3000
+[2019-07-15T14:03:00.403] [INFO] default - has connection
+[2019-07-15T14:04:49.450] [INFO] default - Server Start on 3000
+[2019-07-15T14:04:50.405] [INFO] default - has connection
+[2019-07-15T14:07:17.532] [INFO] default - Server Start on 3000
+[2019-07-15T14:07:18.188] [INFO] default - has connection
+[2019-07-15T14:09:33.574] [INFO] default - Server Start on 3000
+[2019-07-15T14:09:34.424] [INFO] default - has connection
+[2019-07-15T14:10:57.590] [INFO] default - Server Start on 3000
+[2019-07-15T14:10:59.416] [INFO] default - has connection
+[2019-07-15T14:11:50.613] [INFO] default - Server Start on 3000
+[2019-07-15T14:11:51.403] [INFO] default - has connection
+[2019-07-15T14:14:04.658] [INFO] default - Server Start on 3000
+[2019-07-15T14:14:05.403] [INFO] default - has connection
+[2019-07-15T14:14:08.671] [INFO] default - Server Start on 3000
+[2019-07-15T14:14:09.404] [INFO] default - has connection
+[2019-07-15T14:14:14.678] [INFO] default - Server Start on 3000
+[2019-07-15T14:14:15.404] [INFO] default - has connection
+[2019-07-15T14:14:24.722] [INFO] default - Server Start on 3000
+[2019-07-15T14:14:25.404] [INFO] default - has connection
+[2019-07-15T14:15:32.748] [INFO] default - Server Start on 3000
+[2019-07-15T14:15:33.407] [INFO] default - has connection
+[2019-07-15T14:15:38.756] [INFO] default - Server Start on 3000
+[2019-07-15T14:15:40.422] [INFO] default - has connection
+[2019-07-15T14:15:50.776] [INFO] default - Server Start on 3000
+[2019-07-15T14:15:51.408] [INFO] default - has connection
+[2019-07-15T14:16:15.738] [INFO] default - Server Start on 3000
+[2019-07-15T14:16:16.405] [INFO] default - has connection
+[2019-07-15T14:16:26.769] [INFO] default - Server Start on 3000
+[2019-07-15T14:16:28.418] [INFO] default - has connection
+[2019-07-15T14:17:02.827] [INFO] default - Server Start on 3000
+[2019-07-15T14:17:03.404] [INFO] default - has connection
+[2019-07-15T14:20:12.773] [INFO] default - Server Start on 3000
+[2019-07-15T14:20:14.403] [INFO] default - has connection
+[2019-07-15T15:01:14.658] [INFO] default - Server Start on 3000
+[2019-07-15T15:01:15.404] [INFO] default - has connection
+[2019-07-15T15:01:24.675] [INFO] default - Server Start on 3000
+[2019-07-15T15:01:25.403] [INFO] default - has connection
+[2019-07-15T15:10:01.532] [INFO] default - Server Start on 3000
+[2019-07-15T15:10:03.488] [INFO] default - has connection
+[2019-07-15T15:10:07.343] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:11:35.599] [INFO] default - has connection
+[2019-07-15T15:11:39.483] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:11:52.919] [INFO] default - has connection
+[2019-07-15T15:11:55.914] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:12:28.166] [INFO] default - has connection
+[2019-07-15T15:12:32.640] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:15:51.410] [INFO] default - has connection
+[2019-07-15T15:16:14.696] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:16:39.063] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:17:19.248] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:17:42.849] [INFO] default - has connection
+[2019-07-15T15:17:46.105] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:21:10.381] [INFO] default - has connection
+[2019-07-15T15:21:31.146] [INFO] default - has connection
+[2019-07-15T15:21:44.764] [INFO] default - has connection
+[2019-07-15T15:22:21.239] [INFO] default - has connection
+[2019-07-15T15:22:25.151] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:23:05.057] [INFO] default - has connection
+[2019-07-15T15:23:17.345] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:23:32.036] [INFO] default - has connection
+[2019-07-15T15:23:36.680] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:24:24.086] [INFO] default - has connection
+[2019-07-15T15:24:25.270] [INFO] default - has connection
+[2019-07-15T15:24:28.929] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z }
+[2019-07-15T15:24:30.735] [INFO] default - has connection
+[2019-07-15T15:24:45.316] [INFO] default - has connection
+[2019-07-15T15:27:11.005] [INFO] default - Server Start on 3000
+[2019-07-15T15:27:11.407] [INFO] default - has connection
+[2019-07-15T15:28:09.161] [INFO] default - Server Start on 3000
+[2019-07-15T15:28:09.404] [INFO] default - has connection
+[2019-07-15T15:28:36.247] [INFO] default - has connection
+[2019-07-15T15:28:40.680] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:08:33.121Z,
+  createdAt: 2019-07-15T07:08:33.121Z,
+  firm:
+   Firm {
+     id: 1,
+     namespace: 'e-service',
+     name: 'es客服',
+     updatedAt: 2019-07-15T07:07:58.000Z,
+     createdAt: 2019-07-15T07:07:58.000Z } }
+[2019-07-15T15:32:33.179] [INFO] default - Server Start on 3000
+[2019-07-15T15:32:34.044] [INFO] default - Server Start on 3000
+[2019-07-15T15:32:34.169] [INFO] default - has connection
+[2019-07-15T15:32:37.265] [INFO] default - has connection
+[2019-07-15T15:33:22.318] [INFO] default - has connection
+[2019-07-15T15:33:25.608] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'id' in field list is ambiguous
+[2019-07-15T15:33:58.361] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'id' in field list is ambiguous
+[2019-07-15T15:34:00.128] [INFO] default - Server Start on 3000
+[2019-07-15T15:34:00.389] [INFO] default - has connection
+[2019-07-15T15:34:01.823] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'id' in field list is ambiguous
+[2019-07-15T15:34:27.193] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'id' in field list is ambiguous
+[2019-07-15T15:34:29.151] [INFO] default - Server Start on 3000
+[2019-07-15T15:34:29.511] [INFO] default - has connection
+[2019-07-15T15:34:30.730] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'id' in field list is ambiguous
+[2019-07-15T15:34:57.191] [INFO] default - Server Start on 3000
+[2019-07-15T15:34:57.334] [INFO] default - has connection
+[2019-07-15T15:37:23.848] [INFO] default - has connection
+[2019-07-15T15:37:26.432] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'id' in field list is ambiguous
+[2019-07-15T15:38:09.348] [INFO] default - Server Start on 3000
+[2019-07-15T15:38:10.405] [INFO] default - has connection
+[2019-07-15T15:38:11.246] [INFO] default - Server Start on 3000
+[2019-07-15T15:38:13.413] [INFO] default - has connection
+[2019-07-15T15:38:15.433] [ERROR] default - Error: ER_NON_UNIQ_ERROR: Column 'name' in field list is ambiguous
+[2019-07-15T15:40:32.283] [INFO] default - Server Start on 3000
+[2019-07-15T15:40:32.440] [INFO] default - has connection
+[2019-07-15T15:40:32.489] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:37:01.000Z,
+  createdAt: 2019-07-15T07:37:01.000Z,
+  firm:
+   Firm {
+     id: 1,
+     namespace: 'es',
+     name: 'es客服',
+     updatedAt: 2019-07-15T07:36:31.000Z,
+     createdAt: 2019-07-15T07:36:32.000Z } }
+[2019-07-15T15:42:18.329] [INFO] default - Server Start on 3000
+[2019-07-15T15:42:18.762] [INFO] default - has connection
+[2019-07-15T15:42:25.521] [INFO] default - Server Start on 3000
+[2019-07-15T15:42:25.702] [INFO] default - has connection
+[2019-07-15T15:42:33.336] [INFO] default - Server Start on 3000
+[2019-07-15T15:42:33.957] [INFO] default - has connection
+[2019-07-15T15:42:36.330] [INFO] default - Server Start on 3000
+[2019-07-15T15:42:36.785] [INFO] default - has connection
+[2019-07-15T15:42:39.159] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:37:01.000Z,
+  createdAt: 2019-07-15T07:37:01.000Z,
+  firm:
+   Firm {
+     id: 1,
+     namespace: 'es',
+     name: 'es客服',
+     updatedAt: 2019-07-15T07:36:31.000Z,
+     createdAt: 2019-07-15T07:36:32.000Z } }
+[2019-07-15T15:42:39.160] [ERROR] default - Error: moment_1.default is not a function
+[2019-07-15T15:42:48.384] [INFO] default - Server Start on 3000
+[2019-07-15T15:42:48.767] [INFO] default - has connection
+[2019-07-15T15:42:50.358] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:37:01.000Z,
+  createdAt: 2019-07-15T07:37:01.000Z,
+  firm:
+   Firm {
+     id: 1,
+     namespace: 'es',
+     name: 'es客服',
+     updatedAt: 2019-07-15T07:36:31.000Z,
+     createdAt: 2019-07-15T07:36:32.000Z } }
+[2019-07-15T15:43:45.351] [INFO] default - Server Start on 3000
+[2019-07-15T15:43:45.443] [INFO] default - has connection
+[2019-07-15T15:43:52.369] [INFO] default - Server Start on 3000
+[2019-07-15T15:43:52.524] [INFO] default - has connection
+[2019-07-15T15:44:14.378] [INFO] default - Server Start on 3000
+[2019-07-15T15:44:14.636] [INFO] default - has connection
+[2019-07-15T15:44:16.347] [INFO] default - Server Start on 3000
+[2019-07-15T15:44:16.821] [INFO] default - has connection
+[2019-07-15T15:44:18.670] [INFO] default - User {
+  id: 1,
+  username: 'ivan',
+  password: 'ivan',
+  name: 'ivan',
+  role: 'supervisor',
+  token: null,
+  updatedAt: 2019-07-15T07:37:01.000Z,
+  createdAt: 2019-07-15T07:37:01.000Z,
+  firm:
+   Firm {
+     id: 1,
+     namespace: 'es',
+     name: 'es客服',
+     updatedAt: 2019-07-15T07:36:31.000Z,
+     createdAt: 2019-07-15T07:36:32.000Z } }
+[2019-07-15T15:46:23.429] [INFO] default - Server Start on 3000
+[2019-07-15T15:46:23.539] [INFO] default - has connection
+[2019-07-15T15:46:30.441] [INFO] default - Server Start on 3000
+[2019-07-15T15:46:31.175] [INFO] default - has connection
+[2019-07-15T15:46:58.447] [INFO] default - Server Start on 3000
+[2019-07-15T15:46:58.575] [INFO] default - has connection
+[2019-07-15T15:46:59.381] [INFO] default - Server Start on 3000
+[2019-07-15T15:46:59.971] [INFO] default - has connection
+[2019-07-15T15:48:16.481] [INFO] default - Server Start on 3000
+[2019-07-15T15:48:16.601] [INFO] default - has connection
+[2019-07-15T15:48:38.539] [INFO] default - Server Start on 3000
+[2019-07-15T15:48:38.684] [INFO] default - has connection
+[2019-07-15T15:48:52.507] [INFO] default - Server Start on 3000
+[2019-07-15T15:48:52.720] [INFO] default - has connection
+[2019-07-15T15:49:06.535] [INFO] default - Server Start on 3000
+[2019-07-15T15:49:07.236] [INFO] default - has connection
+[2019-07-15T15:49:55.528] [INFO] default - Server Start on 3000
+[2019-07-15T15:49:55.783] [INFO] default - has connection
+[2019-07-15T15:50:02.522] [INFO] default - Server Start on 3000
+[2019-07-15T15:50:03.271] [INFO] default - has connection
+[2019-07-15T15:51:31.617] [INFO] default - Server Start on 3000
+[2019-07-15T15:51:31.725] [INFO] default - has connection
+[2019-07-15T15:51:32.541] [INFO] default - Server Start on 3000
+[2019-07-15T15:51:33.618] [INFO] default - has connection
+[2019-07-15T15:56:08.590] [INFO] default - Server Start on 3000
+[2019-07-15T15:56:09.199] [INFO] default - has connection
+[2019-07-15T15:58:34.679] [INFO] default - Server Start on 3000
+[2019-07-15T15:58:34.882] [INFO] default - has connection
+[2019-07-15T16:00:38.681] [INFO] default - Server Start on 3000
+[2019-07-15T16:00:39.508] [INFO] default - has connection
+[2019-07-15T16:00:52.698] [INFO] default - Server Start on 3000
+[2019-07-15T16:00:53.120] [INFO] default - has connection
+[2019-07-15T16:01:00.741] [INFO] default - Server Start on 3000
+[2019-07-15T16:01:01.100] [INFO] default - has connection
+[2019-07-15T16:02:26.784] [INFO] default - Server Start on 3000
+[2019-07-15T16:02:26.912] [INFO] default - has connection
+[2019-07-15T16:04:07.797] [INFO] default - Server Start on 3000
+[2019-07-15T16:04:08.407] [INFO] default - has connection
+[2019-07-15T16:04:11.762] [INFO] default - Server Start on 3000
+[2019-07-15T16:04:12.580] [INFO] default - has connection
+[2019-07-15T16:13:37.952] [INFO] default - Server Start on 3000
+[2019-07-15T16:13:38.957] [INFO] default - Server Start on 3000
+[2019-07-15T16:13:39.067] [INFO] default - has connection
+[2019-07-15T16:18:02.047] [INFO] default - Server Start on 3000
+[2019-07-15T16:18:02.205] [INFO] default - has connection
+[2019-07-15T16:19:09.051] [INFO] default - Server Start on 3000
+[2019-07-15T16:19:09.227] [INFO] default - has connection
+[2019-07-15T16:22:40.130] [INFO] default - Server Start on 3000
+[2019-07-15T16:22:40.954] [INFO] default - has connection
+[2019-07-15T16:22:46.143] [INFO] default - Server Start on 3000
+[2019-07-15T16:22:46.451] [INFO] default - has connection
+[2019-07-15T16:22:49.135] [INFO] default - Server Start on 3000
+[2019-07-15T16:22:49.573] [INFO] default - has connection
+[2019-07-15T16:23:08.126] [INFO] default - Server Start on 3000
+[2019-07-15T16:23:08.276] [INFO] default - has connection
+[2019-07-15T16:24:23.162] [INFO] default - Server Start on 3000
+[2019-07-15T16:24:23.408] [INFO] default - has connection
+[2019-07-15T16:28:03.228] [INFO] default - Server Start on 3000
+[2019-07-15T16:28:04.407] [INFO] default - has connection
+[2019-07-15T16:28:16.251] [INFO] default - Server Start on 3000
+[2019-07-15T16:28:17.426] [INFO] default - has connection
+[2019-07-15T16:28:41.266] [INFO] default - Server Start on 3000
+[2019-07-15T16:28:42.419] [INFO] default - has connection
+[2019-07-15T16:28:59.274] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:00.402] [INFO] default - has connection
+[2019-07-15T16:29:01.234] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:01.403] [INFO] default - has connection
+[2019-07-15T16:29:17.239] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:17.405] [INFO] default - has connection
+[2019-07-15T16:29:34.361] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:35.403] [INFO] default - has connection
+[2019-07-15T16:29:37.436] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:38.404] [INFO] default - has connection
+[2019-07-15T16:29:40.255] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:40.405] [INFO] default - has connection
+[2019-07-15T16:29:51.276] [INFO] default - Server Start on 3000
+[2019-07-15T16:29:51.403] [INFO] default - has connection
+[2019-07-15T16:30:20.248] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:22.049] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:24.099] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:27.091] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:29.103] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:30.348] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:31.402] [INFO] default - has connection
+[2019-07-15T16:30:32.286] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:32.403] [INFO] default - has connection
+[2019-07-15T16:30:46.273] [INFO] default - Server Start on 3000
+[2019-07-15T16:30:47.405] [INFO] default - has connection
+[2019-07-15T16:32:10.321] [INFO] default - Server Start on 3000
+[2019-07-15T16:32:11.412] [INFO] default - has connection
+[2019-07-15T16:32:47.406] [INFO] default - has connection
+[2019-07-15T16:34:38.384] [INFO] default - Server Start on 3000
+[2019-07-15T16:34:39.403] [INFO] default - has connection
+[2019-07-15T16:35:51.367] [INFO] default - Server Start on 3000
+[2019-07-15T16:35:52.403] [INFO] default - has connection
+[2019-07-15T16:35:58.398] [INFO] default - Server Start on 3000
+[2019-07-15T16:35:59.403] [INFO] default - has connection
+[2019-07-15T17:01:40.865] [INFO] default - Server Start on 3000
+[2019-07-15T17:01:41.720] [INFO] default - has connection
+[2019-07-15T17:01:55.879] [INFO] default - Server Start on 3000
+[2019-07-15T17:01:56.308] [INFO] default - has connection
+[2019-07-15T17:02:07.203] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:07.540] [INFO] default - has connection
+[2019-07-15T17:02:08.910] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:09.720] [INFO] default - has connection
+[2019-07-15T17:02:10.928] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:11.736] [INFO] default - has connection
+[2019-07-15T17:02:16.945] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:17.046] [INFO] default - has connection
+[2019-07-15T17:02:26.899] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:27.109] [INFO] default - has connection
+[2019-07-15T17:02:31.889] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:32.082] [INFO] default - has connection
+[2019-07-15T17:02:39.941] [INFO] default - Server Start on 3000
+[2019-07-15T17:02:40.163] [INFO] default - has connection
+[2019-07-15T17:08:33.040] [INFO] default - Server Start on 3000
+[2019-07-15T17:08:34.408] [INFO] default - has connection
+[2019-07-15T17:11:29.054] [INFO] default - Server Start on 3000
+[2019-07-15T17:11:30.406] [INFO] default - has connection
+[2019-07-15T17:37:28.644] [INFO] default - Server Start on 3000
+[2019-07-15T17:37:29.404] [INFO] default - has connection
+[2019-07-15T17:37:43.544] [INFO] default - has connection
+[2019-07-15T17:37:51.751] [ERROR] default - Error: invalid username or password
+[2019-07-15T17:38:05.688] [INFO] default - Server Start on 3000
+[2019-07-15T17:38:06.035] [INFO] default - has connection
+[2019-07-15T17:38:10.706] [INFO] default - Server Start on 3000
+[2019-07-15T17:38:10.796] [INFO] default - has connection
+[2019-07-15T17:40:27.021] [INFO] default - Server Start on 3000
+[2019-07-15T17:40:27.567] [INFO] default - has connection
+[2019-07-15T17:41:03.132] [INFO] default - Server Start on 3000
+[2019-07-15T17:41:03.892] [INFO] default - has connection
+[2019-07-15T17:41:36.217] [INFO] default - Server Start on 3000
+[2019-07-15T17:41:36.455] [INFO] default - has connection
+[2019-07-15T17:41:38.877] [ERROR] default - Error: invalid username or password
+[2019-07-15T17:42:45.409] [INFO] default - Server Start on 3000
+[2019-07-15T17:42:45.499] [INFO] default - has connection
+[2019-07-15T17:42:48.068] [ERROR] default - Error: invalid username or password
+[2019-07-15T17:44:27.670] [INFO] default - Server Start on 3000
+[2019-07-15T17:44:28.293] [INFO] default - has connection
+[2019-07-15T17:44:39.658] [INFO] default - Server Start on 3000
+[2019-07-15T17:44:40.077] [INFO] default - has connection
+[2019-07-15T17:44:43.188] [ERROR] default - Error: invalid username or password
+[2019-07-15T17:45:30.719] [INFO] default - Server Start on 3000
+[2019-07-15T17:45:31.560] [INFO] default - has connection, namespace = null
+[2019-07-15T17:45:53.784] [INFO] default - Server Start on 3000
+[2019-07-15T17:45:53.871] [INFO] default - has connection, namespace = es
+[2019-07-15T17:46:24.880] [INFO] default - Server Start on 3000
+[2019-07-15T17:46:24.973] [INFO] default - has connection, namespace = es
+[2019-07-15T17:46:31.846] [ERROR] default - Error: invalid username or password
+[2019-07-15T17:48:51.208] [INFO] default - Server Start on 3000
+[2019-07-15T17:48:51.424] [INFO] default - has connection, namespace = es
+[2019-07-15T17:48:53.209] [INFO] default - Server Start on 3000
+[2019-07-15T17:48:53.336] [INFO] default - has connection, namespace = es
+[2019-07-15T17:49:10.219] [INFO] default - Server Start on 3000
+[2019-07-15T17:49:10.987] [INFO] default - has connection, namespace = es
+[2019-07-15T17:49:14.243] [INFO] default - Server Start on 3000
+[2019-07-15T17:49:14.428] [INFO] default - has connection, namespace = es
+[2019-07-15T17:49:23.258] [INFO] default - Server Start on 3000
+[2019-07-15T17:49:23.351] [INFO] default - has connection, namespace = es
+[2019-07-15T17:50:13.396] [INFO] default - Server Start on 3000
+[2019-07-15T17:50:15.592] [INFO] default - has connection, namespace = es
+[2019-07-15T17:50:15.626] [ERROR] default - Err: socket.emit is not a function
+[2019-07-15T17:50:50.566] [INFO] default - Server Start on 3000
+[2019-07-15T17:50:50.747] [INFO] default - has connection, namespace = es
+[2019-07-15T17:50:50.783] [INFO] default - { nsp:
+   Namespace {
+     name: '/',
+     server:
+      Server {
+        nsps: [Object],
+        parentNsps: Map {},
+        _path: '/socket.io',
+        _serveClient: true,
+        parser: [Object],
+        encoder: Encoder {},
+        _adapter: [Function: Adapter],
+        _origins: '*:*',
+        sockets: [Circular],
+        eio: [Server],
+        httpServer: [Server],
+        engine: [Server] },
+     sockets: { '6owww0cG9z3hO6RsAAAA': [Socket] },
+     connected: { '6owww0cG9z3hO6RsAAAA': [Socket] },
+     fns: [],
+     ids: 0,
+     rooms: [],
+     flags: {},
+     adapter:
+      Adapter {
+        nsp: [Circular],
+        rooms: [Object],
+        sids: [Object],
+        encoder: Encoder {} },
+     _events: [Object: null prototype] { connect: [Function] },
+     _eventsCount: 1 },
+  server:
+   Server {
+     nsps: { '/': [Namespace] },
+     parentNsps: Map {},
+     _path: '/socket.io',
+     _serveClient: true,
+     parser:
+      { protocol: 4,
+        types: [Array],
+        CONNECT: 0,
+        DISCONNECT: 1,
+        EVENT: 2,
+        ACK: 3,
+        ERROR: 4,
+        BINARY_EVENT: 5,
+        BINARY_ACK: 6,
+        Encoder: [Function: Encoder],
+        Decoder: [Function: Decoder] },
+     encoder: Encoder {},
+     _adapter: [Function: Adapter],
+     _origins: '*:*',
+     sockets:
+      Namespace {
+        name: '/',
+        server: [Circular],
+        sockets: [Object],
+        connected: [Object],
+        fns: [],
+        ids: 0,
+        rooms: [],
+        flags: {},
+        adapter: [Adapter],
+        _events: [Object],
+        _eventsCount: 1 },
+     eio:
+      Server {
+        clients: [Object],
+        clientsCount: 1,
+        wsEngine: 'ws',
+        pingTimeout: 5000,
+        pingInterval: 25000,
+        upgradeTimeout: 10000,
+        maxHttpBufferSize: 100000000,
+        transports: [Array],
+        allowUpgrades: true,
+        allowRequest: [Function: bound ],
+        cookie: 'io',
+        cookiePath: '/',
+        cookieHttpOnly: true,
+        perMessageDeflate: [Object],
+        httpCompression: [Object],
+        initialPacket: [Array],
+        ws: [WebSocketServer],
+        _events: [Object],
+        _eventsCount: 1 },
+     httpServer:
+      Server {
+        _events: [Object],
+        _eventsCount: 5,
+        _maxListeners: undefined,
+        _connections: 2,
+        _handle: [TCP],
+        _usingWorkers: false,
+        _workers: [],
+        _unref: false,
+        allowHalfOpen: true,
+        pauseOnConnect: false,
+        httpAllowHalfOpen: false,
+        timeout: 120000,
+        keepAliveTimeout: 5000,
+        maxHeadersCount: null,
+        headersTimeout: 40000,
+        _connectionKey: '6::::3000',
+        [Symbol(IncomingMessage)]: [Function],
+        [Symbol(ServerResponse)]: [Function],
+        [Symbol(asyncId)]: 6 },
+     engine:
+      Server {
+        clients: [Object],
+        clientsCount: 1,
+        wsEngine: 'ws',
+        pingTimeout: 5000,
+        pingInterval: 25000,
+        upgradeTimeout: 10000,
+        maxHttpBufferSize: 100000000,
+        transports: [Array],
+        allowUpgrades: true,
+        allowRequest: [Function: bound ],
+        cookie: 'io',
+        cookiePath: '/',
+        cookieHttpOnly: true,
+        perMessageDeflate: [Object],
+        httpCompression: [Object],
+        initialPacket: [Array],
+        ws: [WebSocketServer],
+        _events: [Object],
+        _eventsCount: 1 } },
+  adapter:
+   Adapter {
+     nsp:
+      Namespace {
+        name: '/',
+        server: [Server],
+        sockets: [Object],
+        connected: [Object],
+        fns: [],
+        ids: 0,
+        rooms: [],
+        flags: {},
+        adapter: [Circular],
+        _events: [Object],
+        _eventsCount: 1 },
+     rooms: { '6owww0cG9z3hO6RsAAAA': [Room] },
+     sids: { '6owww0cG9z3hO6RsAAAA': [Object] },
+     encoder: Encoder {} },
+  id: '6owww0cG9z3hO6RsAAAA',
+  client:
+   Client {
+     server:
+      Server {
+        nsps: [Object],
+        parentNsps: Map {},
+        _path: '/socket.io',
+        _serveClient: true,
+        parser: [Object],
+        encoder: Encoder {},
+        _adapter: [Function: Adapter],
+        _origins: '*:*',
+        sockets: [Namespace],
+        eio: [Server],
+        httpServer: [Server],
+        engine: [Server] },
+     conn:
+      Socket {
+        id: '6owww0cG9z3hO6RsAAAA',
+        server: [Server],
+        upgrading: true,
+        upgraded: false,
+        readyState: 'open',
+        writeBuffer: [],
+        packetsFn: [],
+        sentCallbackFn: [],
+        cleanupFn: [Array],
+        request: [IncomingMessage],
+        remoteAddress: '::ffff:127.0.0.1',
+        checkIntervalTimer: null,
+        upgradeTimeoutTimer:
+         Timeout {
+           _called: false,
+           _idleTimeout: 10000,
+           _idlePrev: [TimersList],
+           _idleNext: [TimersList],
+           _idleStart: 815,
+           _onTimeout: [Function],
+           _timerArgs: undefined,
+           _repeat: null,
+           _destroyed: false,
+           [Symbol(unrefed)]: false,
+           [Symbol(asyncId)]: 52,
+           [Symbol(triggerId)]: 47 },
+        pingTimeoutTimer:
+         Timeout {
+           _called: false,
+           _idleTimeout: 30000,
+           _idlePrev: [TimersList],
+           _idleNext: [TimersList],
+           _idleStart: 793,
+           _onTimeout: [Function],
+           _timerArgs: undefined,
+           _repeat: null,
+           _destroyed: false,
+           [Symbol(unrefed)]: false,
+           [Symbol(asyncId)]: 19,
+           [Symbol(triggerId)]: 14 },
+        transport: [XHR],
+        _events: [Object],
+        _eventsCount: 3 },
+     encoder: Encoder {},
+     decoder: Decoder { reconstructor: null, _callbacks: [Object] },
+     id: '6owww0cG9z3hO6RsAAAA',
+     request:
+      IncomingMessage {
+        _readableState: [ReadableState],
+        readable: false,
+        _events: [Object],
+        _eventsCount: 1,
+        _maxListeners: undefined,
+        socket: [Socket],
+        connection: [Socket],
+        httpVersionMajor: 1,
+        httpVersionMinor: 1,
+        httpVersion: '1.1',
+        complete: true,
+        headers: [Object],
+        rawHeaders: [Array],
+        trailers: {},
+        rawTrailers: [],
+        aborted: false,
+        upgrade: false,
+        url: '/socket.io/?namespace=es&EIO=3&transport=polling&t=Mlr2hzH',
+        method: 'GET',
+        statusCode: null,
+        statusMessage: null,
+        client: [Socket],
+        _consuming: false,
+        _dumped: true,
+        _query: [Object],
+        res: [ServerResponse],
+        cleanup: [Function: cleanup] },
+     onclose: [Function: bound ],
+     ondata: [Function: bound ],
+     onerror: [Function: bound ],
+     ondecoded: [Function: bound ],
+     sockets: { '6owww0cG9z3hO6RsAAAA': [Socket] },
+     nsps: { '/': [Socket] },
+     connectBuffer: [] },
+  conn:
+   Socket {
+     id: '6owww0cG9z3hO6RsAAAA',
+     server:
+      Server {
+        clients: [Object],
+        clientsCount: 1,
+        wsEngine: 'ws',
+        pingTimeout: 5000,
+        pingInterval: 25000,
+        upgradeTimeout: 10000,
+        maxHttpBufferSize: 100000000,
+        transports: [Array],
+        allowUpgrades: true,
+        allowRequest: [Function: bound ],
+        cookie: 'io',
+        cookiePath: '/',
+        cookieHttpOnly: true,
+        perMessageDeflate: [Object],
+        httpCompression: [Object],
+        initialPacket: [Array],
+        ws: [WebSocketServer],
+        _events: [Object],
+        _eventsCount: 1 },
+     upgrading: true,
+     upgraded: false,
+     readyState: 'open',
+     writeBuffer: [],
+     packetsFn: [],
+     sentCallbackFn: [],
+     cleanupFn: [ [Function], [Function] ],
+     request:
+      IncomingMessage {
+        _readableState: [ReadableState],
+        readable: false,
+        _events: [Object],
+        _eventsCount: 1,
+        _maxListeners: undefined,
+        socket: [Socket],
+        connection: [Socket],
+        httpVersionMajor: 1,
+        httpVersionMinor: 1,
+        httpVersion: '1.1',
+        complete: true,
+        headers: [Object],
+        rawHeaders: [Array],
+        trailers: {},
+        rawTrailers: [],
+        aborted: false,
+        upgrade: false,
+        url: '/socket.io/?namespace=es&EIO=3&transport=polling&t=Mlr2hzH',
+        method: 'GET',
+        statusCode: null,
+        statusMessage: null,
+        client: [Socket],
+        _consuming: false,
+        _dumped: true,
+        _query: [Object],
+        res: [ServerResponse],
+        cleanup: [Function: cleanup] },
+     remoteAddress: '::ffff:127.0.0.1',
+     checkIntervalTimer: null,
+     upgradeTimeoutTimer:
+      Timeout {
+        _called: false,
+        _idleTimeout: 10000,
+        _idlePrev: [TimersList],
+        _idleNext: [TimersList],
+        _idleStart: 815,
+        _onTimeout: [Function],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(unrefed)]: false,
+        [Symbol(asyncId)]: 52,
+        [Symbol(triggerId)]: 47 },
+     pingTimeoutTimer:
+      Timeout {
+        _called: false,
+        _idleTimeout: 30000,
+        _idlePrev: [TimersList],
+        _idleNext: [TimersList],
+        _idleStart: 793,
+        _onTimeout: [Function],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(unrefed)]: false,
+        [Symbol(asyncId)]: 19,
+        [Symbol(triggerId)]: 14 },
+     transport:
+      XHR {
+        readyState: 'open',
+        discarded: false,
+        closeTimeout: 30000,
+        maxHttpBufferSize: 100000000,
+        httpCompression: [Object],
+        supportsBinary: true,
+        _events: [Object],
+        _eventsCount: 5,
+        sid: '6owww0cG9z3hO6RsAAAA',
+        req: [IncomingMessage],
+        res: [ServerResponse],
+        writable: true },
+     _events:
+      [Object: null prototype] {
+        close: [Array],
+        data: [Function: bound ],
+        error: [Function: bound ] },
+     _eventsCount: 3 },
+  rooms: { '6owww0cG9z3hO6RsAAAA': '6owww0cG9z3hO6RsAAAA' },
+  acks: {},
+  connected: true,
+  disconnected: false,
+  handshake:
+   { headers:
+      { host: '127.0.0.1:3000',
+        connection: 'keep-alive',
+        accept: '*/*',
+        origin: 'http://127.0.0.1:8080',
+        'user-agent':
+         'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+        referer: 'http://127.0.0.1:8080/login',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        cookie: 'io=L2h0r9zhsnfX8N5bAAAA' },
+     time: 'Mon Jul 15 2019 17:50:50 GMT+0800 (GMT+08:00)',
+     address: '::ffff:127.0.0.1',
+     xdomain: true,
+     secure: false,
+     issued: 1563184250744,
+     url: '/socket.io/?namespace=es&EIO=3&transport=polling&t=Mlr2hzH',
+     query:
+      { namespace: 'es', EIO: '3', transport: 'polling', t: 'Mlr2hzH' } },
+  fns: [],
+  flags: {},
+  _rooms: [],
+  on: [Function: on] }
+[2019-07-15T17:50:50.791] [ERROR] default - Err: socket.emit is not a function
+[2019-07-15T17:51:09.579] [INFO] default - Server Start on 3000
+[2019-07-15T17:51:09.733] [INFO] default - has connection, namespace = es
+[2019-07-15T17:51:09.764] [INFO] default - undefined
+[2019-07-15T17:51:09.765] [ERROR] default - Err: socket.emit is not a function
+[2019-07-15T17:52:23.762] [INFO] default - Server Start on 3000
+[2019-07-15T17:52:24.405] [INFO] default - has connection, namespace = es
+[2019-07-15T17:52:24.437] [ERROR] default - Err: socket.emit is not a function
+[2019-07-15T17:52:33.658] [INFO] default - Server Start on 3000
+[2019-07-15T17:52:34.405] [INFO] default - has connection, namespace = es
+[2019-07-15T17:52:34.406] [INFO] default - [Function]
+[2019-07-15T17:52:34.437] [ERROR] default - Err: socket.emit is not a function
+[2019-07-15T17:53:39.688] [INFO] default - Server Start on 3000
+[2019-07-15T17:53:41.410] [INFO] default - has connection, namespace = es
+[2019-07-15T17:53:41.410] [INFO] default - [Function]
+[2019-07-15T17:54:18.698] [INFO] default - Server Start on 3000
+[2019-07-15T17:54:19.403] [INFO] default - has connection, namespace = es
+[2019-07-15T17:54:19.404] [INFO] default - [Function]
+[2019-07-15T17:54:38.274] [ERROR] default - Error: invalid username or password
+[2019-07-15T17:54:41.452] [INFO] default - has connection, namespace = es
+[2019-07-15T17:54:41.453] [INFO] default - [Function]
+[2019-07-15T17:54:59.726] [INFO] default - Server Start on 3000
+[2019-07-15T17:54:59.821] [INFO] default - has connection, namespace = es
+[2019-07-15T17:54:59.822] [INFO] default - [Function]
+[2019-07-15T17:55:08.781] [INFO] default - Server Start on 3000
+[2019-07-15T17:55:09.566] [INFO] default - has connection, namespace = es
+[2019-07-15T17:55:09.567] [INFO] default - [Function]
+[2019-07-15T17:55:11.710] [INFO] default - Server Start on 3000
+[2019-07-15T17:55:12.165] [INFO] default - has connection, namespace = es
+[2019-07-15T17:55:12.166] [INFO] default - [Function]
+[2019-07-15T17:55:18.758] [INFO] default - Server Start on 3000
+[2019-07-15T17:55:18.963] [INFO] default - has connection, namespace = es
+[2019-07-15T17:55:18.964] [INFO] default - [Function]
+[2019-07-15T17:55:28.750] [INFO] default - Server Start on 3000
+[2019-07-15T17:55:29.504] [INFO] default - has connection, namespace = es
+[2019-07-15T17:55:29.505] [INFO] default - [Function]
+[2019-07-15T17:56:33.739] [INFO] default - Server Start on 3000
+[2019-07-15T17:56:34.460] [INFO] default - has connection, namespace = es
+[2019-07-15T17:56:34.460] [INFO] default - [Function]
+[2019-07-15T17:57:34.847] [INFO] default - Server Start on 3000
+[2019-07-15T17:57:35.005] [INFO] default - has connection, namespace = es
+[2019-07-15T17:57:35.007] [INFO] default - [Function]
+[2019-07-15T17:58:45.844] [INFO] default - Server Start on 3000
+[2019-07-15T17:58:46.122] [INFO] default - has connection, namespace = es
+[2019-07-15T17:58:46.123] [INFO] default - [Function]
+[2019-07-15T17:59:01.919] [INFO] default - Server Start on 3000
+[2019-07-15T17:59:02.155] [INFO] default - has connection, namespace = es
+[2019-07-15T17:59:02.156] [INFO] default - [Function]
+[2019-07-15T18:00:23.849] [INFO] default - Server Start on 3000
+[2019-07-15T18:00:25.405] [INFO] default - has connection, namespace = es
+[2019-07-15T18:00:25.406] [INFO] default - [Function]
+[2019-07-15T18:00:31.835] [INFO] default - Server Start on 3000
+[2019-07-15T18:00:32.406] [INFO] default - has connection, namespace = es
+[2019-07-15T18:00:32.406] [INFO] default - [Function]
+[2019-07-15T18:00:32.407] [ERROR] default - Err: PublicService_1.default.onConnect is not a function
+[2019-07-15T18:00:37.843] [INFO] default - Server Start on 3000
+[2019-07-15T18:04:24.898] [INFO] default - Server Start on 3000
+[2019-07-15T18:15:11.287] [INFO] default - Server Start on 3000
+[2019-07-15T18:15:12.105] [INFO] default - Server Start on 3000
+[2019-07-15T18:15:17.074] [INFO] default - Server Start on 3000
+[2019-07-15T18:15:26.130] [INFO] default - Server Start on 3000
+[2019-07-15T18:15:37.091] [INFO] default - Server Start on 3000
+[2019-07-15T18:15:55.085] [INFO] default - Server Start on 3000
+[2019-07-15T18:16:12.132] [INFO] default - Server Start on 3000
+[2019-07-15T18:16:49.101] [INFO] default - Server Start on 3000
+[2019-07-15T18:17:15.133] [INFO] default - Server Start on 3000
+[2019-07-15T18:17:17.121] [INFO] default - Server Start on 3000
+[2019-07-15T18:17:27.125] [INFO] default - Server Start on 3000
+[2019-07-15T18:18:29.150] [INFO] default - Server Start on 3000
+[2019-07-15T18:22:22.264] [INFO] default - Server Start on 3000
+[2019-07-15T18:24:53.267] [INFO] default - Server Start on 3000

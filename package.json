@@ -6,6 +6,8 @@
     "scripts": {
         "watch": "gulp",
         "start": "supervisor -w dist dist/index",
+        "generate-db": "node build/migration-generate",
+        "run-db": "typeorm migration:run",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {

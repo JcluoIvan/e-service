@@ -19,5 +19,4 @@ function buildTS() {
 function watch() {
     return gulp.watch(PATHS.ts.src, buildTS);
 }
-
 gulp.task('default', gulp.parallel(buildTS, watch));
