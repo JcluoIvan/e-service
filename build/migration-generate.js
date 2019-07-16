@@ -9,6 +9,7 @@ function buildMigrations(filename) {
         .pipe(tsp())
         .pipe(gulp.dest('./migrations'));
 }
+
 const res = execSync('typeorm migration:generate -n DB').toString();
 const [filename = null] = res.match(/\d+-DB\.ts/) || [];
 if (filename) {

@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn, Unique } from 'typeorm';
-import { Firm } from './Firm';
 
 export enum UserRole {
     /* 主管 */
@@ -9,7 +8,7 @@ export enum UserRole {
 }
 
 @Entity()
-@Unique(['username', 'firm'])
+@Unique(['username'])
 export class User {
     @PrimaryGeneratedColumn({
         unsigned: true,
@@ -46,16 +45,10 @@ export class User {
     @Column({
         type: 'varchar',
         length: 50,
-        nullable: false,
+        nullable: true,
         default: null,
     })
     public token!: string | null;
-
-    @OneToOne(() => Firm)
-    @JoinColumn({
-        name: 'firm_id',
-    })
-    public firm!: Firm;
 
     @CreateDateColumn({
         name: 'updated_at',

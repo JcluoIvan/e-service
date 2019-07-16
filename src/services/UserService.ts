@@ -1,46 +1,73 @@
 import { User } from '../entity/User';
 import { getConnection } from 'typeorm';
 import { LoginFailedError } from '../exceptions/login.errors';
-import * as moment from 'moment';
+import { responseSuccess, socketEventMiddleware, throwError } from '../support';
+import logger from '../logger';
+import { EventEmitter } from 'events';
 
 export interface UserItem {
     user: User;
-    socket: SIO.User.Socket;
+    socket: IUser.Socket.Socket;
 }
 
 export default class UserService {
+    public events = new EventEmitter();
+    public on: IUser.UserServiceEvents.Listener = this.events.on;
     private users = new Map<number, UserItem>();
 
-    public async login(socket: SIO.User.Socket, data: { firmId: number; username: string; password: string }) {
-        const user = await getConnection()
+    constructor(private nspUser: IUser.Socket.Namespace) {
+        this.nsp.on('connect', async (originSocket) => {
+            /* middleware - handle error */
+            const socket: IUser.Socket.Socket = socketEventMiddleware<IUser.Socket.Socket>(
+                originSocket,
+                async (response, next) => {
+                    try {
+                        response(responseSuccess(await next()));
+                    } catch (err) {
+                        logger.error(`Error: ${err.message}`);
+                        response(throwError(err));
+                    }
+                },
+            );
+
+            socket.on('login', async ({ username, password }, res) => {
+                const user = await this.findUser(username);
+                if (!user || user.checkPassword(password)) {
+                    throw new LoginFailedError();
+                }
+
+                const existsUser = this.users.get(user.id);
+                if (existsUser) {
+                    existsUser.socket.disconnect();
+                }
+
+                const userItem = {
+                    user,
+                    socket,
+                };
+
+                this.users.set(user.id, userItem);
+
+                socket.on('disconnect', () => {
+                    this.users.delete(user.id);
+                });
+
+                this.events.emit('login', { socket, user });
+            });
+        });
+    }
+
+    get nsp() {
+        return this.nspUser;
+    }
+    public getUser(id: number) {
+        return this.users.get(id);
+    }
+    private async findUser(username: string) {
+        return await getConnection()
             .getRepository(User)
             .createQueryBuilder('user')
-            .where('username = :username', { username: data.username })
-            .where('firm_id = :fid', { fid: data.firmId })
-            .leftJoinAndSelect('user.firm', 'firm')
+            .where('username = :username', { username })
             .getOne();
-
-        if (!user) {
-            throw new LoginFailedError();
-        }
-
-        if (!user.checkPassword(data.password)) {
-            throw new LoginFailedError();
-        }
-
-        const existsUser = this.users.get(user.id);
-
-        if (existsUser) {
-            existsUser.socket.disconnect();
-        }
-
-        const userItem = {
-            user,
-            socket,
-        };
-
-        this.users.set(user.id, userItem);
-
-        return userItem;
     }
 }

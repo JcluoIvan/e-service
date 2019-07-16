@@ -4,67 +4,30 @@ import './config/database';
 import * as socketio from 'socket.io';
 import logger from './logger';
 import { socketEventMiddleware, responseSuccess, throwError } from './support';
-import { Firm } from './entity/Firm';
 import UserService from './services/UserService';
-import PublicService from './services/PublicService';
 import ExecutiveService from './services/ExecutiveService';
+import * as path from 'path';
+import CustomerService from './services/CustomerService';
+import CenterService from './services/CenterService';
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio().listen(server);
 
-app.get('/', (req, res) => {
-
-
-
-});
-
-
 server.listen(3000, () => {
     logger.info(`Server Start on 3000`);
 
-    const userService = new UserService();
-    const publicService = new PublicService();
+    const nspUser: IUser.Socket.Namespace = io.of('/user') as any;
+    const nspCustomer: ICustomer.Socket.Namespace = io.of('/customer') as any;
+
+    const userService = new UserService(nspUser);
+    const customerService = new CustomerService(nspCustomer);
+
     const executiveService = new ExecutiveService(userService);
+    const centerService = new CenterService(userService, customerService);
 
-    /* middleware - handle error exception */
-    io.of('user').on('connect', async (originSocket: SIO.User.Socket) => {
-        const { namespace = null } = originSocket.handshake.query || {};
-
-        logger.info(`has connection, namespace = ${namespace}`);
-
-        const socket: SIO.User.Socket = socketEventMiddleware<SIO.User.Socket>(originSocket, async (response, next) => {
-            try {
-                response(responseSuccess(await next()));
-            } catch (err) {
-                logger.error(`Error: ${err.message}`);
-                response(throwError(err));
-            }
-        });
-
-        let firm!: Firm;
-        try {
-            firm = await publicService.onConnect(socket, namespace);
-        } catch (err) {
-            // has error
-            logger.error(`Err: ${err.message}`);
-            socket.disconnect();
-            return;
-        }
-
-        socket.on('login', async ({ username, password }, res) => {
-            /* 登入 */
-            const userItem = await userService.login(socket, { firmId: firm.id, username, password });
-            res({
-                id: userItem.user.id,
-                name: userItem.user.name,
-                role: userItem.user.role,
-            });
-
-            /* 登入成功後 */
-            executiveService.onConnected(userItem);
-        });
-    });
-
-    io.of('customer').on('connect', async (originSocket: SIO.Customer.Socket) => {});
 });
+
+const publicRoot = path.join(__dirname, '../public');
+app.set('view options', { layout: false });
+app.use(express.static(publicRoot));
