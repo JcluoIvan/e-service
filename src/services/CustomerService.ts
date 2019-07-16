@@ -10,7 +10,7 @@ export interface CustomerInformation {
 export interface CustomerItem {
     token: string;
     info: CustomerInformation;
-    socket: IUser.Socket.Socket;
+    socket: ICustomer.Socket.Socket;
 }
 
 export default class CustomerService {

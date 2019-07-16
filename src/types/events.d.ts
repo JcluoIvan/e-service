@@ -15,7 +15,7 @@ declare namespace MySocket {
         (event: 'disconnect'): boolean;
     }
 
-    interface Listener<T = any, S = any> {
+    interface Listener<T = () => void, S = any> {
         (event: string | symbol, listener: (...args: any[]) => void): T;
         (event: 'connect', listener: (socket: S) => void): T;
         (event: 'disconnect'): T;
@@ -37,7 +37,7 @@ declare namespace IUser {
                 event: 'login',
                 listener: (
                     data: { username: string; password: string },
-                    response: (data: ResponseData.Login) => void,
+                    response: (data: MySocket.Response.Data<ResponseData.Login>) => void,
                 ) => void,
             ): T;
 
@@ -46,11 +46,13 @@ declare namespace IUser {
 
         interface Emitter extends MySocket.Emitter {
             // (event: 'firm', data: { id: number; name: string }): boolean;
+            (event: 'center/despatch-task', data: { taskId: number; roomId: number }): boolean;
         }
 
         interface Socket extends SocketIO.Socket {
             on: Listener<this>;
             emit: Emitter;
+            nsp: Namespace;
         }
 
         interface Namespace extends SocketIO.Namespace {
@@ -69,32 +71,23 @@ declare namespace IUser {
 declare namespace ICustomer {
     namespace Socket {
         namespace EmitterData {
-            interface Message {
-                content: string | Buffer;
-                type: 'text/plain' | 'image/jpeg' | 'image/png';
-                time: string;
-            }
+            interface Message {}
         }
 
-        namespace ResponseData {
-            interface Send {
-                content: string | Buffer;
-                type: 'text/plain' | 'image/jpeg' | 'image/png';
-            }
-        }
+        namespace ResponseData {}
 
         interface Emitter extends MySocket.Emitter {
             // (event: 'firm', data: { id: number; name: string }): boolean;
-            (event: 'message', data: EmitterData.Message): boolean;
+            (event: 'center/join-room'): boolean;
         }
 
         interface Listener<T = any> extends MySocket.Listener<T, Socket> {
-            (event: 'send', listener: (data: ResponseData.Send, response: (time: string) => void) => void): T;
             (event: 'close', listener: void): T;
         }
         interface Socket extends SocketIO.Socket {
             on: Listener<this>;
             emit: Emitter;
+            nsp: Namespace;
         }
 
         interface Namespace extends SocketIO.Namespace {
@@ -107,6 +100,54 @@ declare namespace ICustomer {
         interface Listener<T = any> {
             (event: string | symbol, listener: (...args: any[]) => void): T;
             (event: 'connect', listener: (data: { socket: Socket.Socket; token: string }) => void): T;
+        }
+    }
+}
+
+declare namespace ITask {
+    interface Message {
+        content: string | Buffer;
+        type: 'text/plain' | 'image/jpeg' | 'image/png';
+        time: number;
+    }
+
+    namespace Socket {
+        interface CommonEmitter {
+            (event: string | symbol, ...args: any[]): boolean;
+            (event: 'send', data: Message): boolean;
+        }
+        interface CommonListener<T = any> {
+            (event: string | symbol, listener: (...args: any[]) => void): T;
+            (event: 'send', listener: (data: Message, response: (time: number) => void) => void): T;
+        }
+
+        namespace Customer {
+            interface Listener<T = any> extends CommonListener<T> {
+                (event: 'close'): T;
+            }
+            interface Emitter extends CommonEmitter {}
+            interface Namespace extends SocketIO.Namespace {
+                on: Listener<this>;
+                emit: Emitter;
+            }
+        }
+        namespace Executive {
+            interface Listener<T = any> extends CommonListener<T> {}
+            interface Emitter extends CommonEmitter {}
+            interface Namespace extends SocketIO.Namespace {
+                on: Listener<this>;
+                emit: Emitter;
+            }
+        }
+        namespace Watcher {
+            interface Listener<T = any> extends CommonListener<T> {
+                (event: 'task/toggle-lock', listener: (toggle: boolean, res: (res: boolean) => void) => void): T;
+            }
+            interface Emitter extends CommonEmitter {}
+            interface Namespace extends SocketIO.Namespace {
+                on: Listener<this>;
+                emit: Emitter;
+            }
         }
     }
 }

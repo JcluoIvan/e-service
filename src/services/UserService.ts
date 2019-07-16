@@ -17,6 +17,7 @@ export default class UserService {
 
     constructor(private nspUser: IUser.Socket.Namespace) {
         this.nsp.on('connect', async (originSocket) => {
+            logger.info('connect');
             /* middleware - handle error */
             const socket: IUser.Socket.Socket = socketEventMiddleware<IUser.Socket.Socket>(
                 originSocket,
@@ -31,9 +32,11 @@ export default class UserService {
             );
 
             socket.on('login', async ({ username, password }, res) => {
+                logger.info('login');
                 const user = await this.findUser(username);
                 if (!user || user.checkPassword(password)) {
-                    throw new LoginFailedError();
+                    res(throwError(new LoginFailedError()));
+                    return;
                 }
 
                 const existsUser = this.users.get(user.id);

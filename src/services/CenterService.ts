@@ -45,6 +45,8 @@ export default class CenterService {
             const task = new Task(item);
 
             this.taskQueues.push(task);
+
+            this.dispatchTask();
         });
 
         /* 成員登入 */
@@ -56,11 +58,18 @@ export default class CenterService {
                 return;
             }
 
+            socket.on('disconnect', () => {
+                this.rooms = this.rooms.filter((r) => r.id !== id);
+            });
+
             const sroom = new ServiceRoom(uitem);
             this.rooms.push(sroom);
+
+            this.dispatchTask();
         });
     }
 
+    /* 任務分配 */
     private dispatchTask() {
         const setting = this.setting;
         let room: ServiceRoom | null = null;
@@ -73,7 +82,7 @@ export default class CenterService {
             room = this.rooms.find((r) => r.tasks.length < setting.max) || null;
         } else if (setting.mode === Mode.Loop) {
             const numRooms = this.rooms.length;
-            let idx = (this.loopIndex ++ / this.rooms.length);
+            let idx = this.loopIndex++ / this.rooms.length;
             const maxIdx = idx + numRooms;
             while (idx < maxIdx || room) {
                 room = this.rooms[idx % numRooms];

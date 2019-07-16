@@ -5,24 +5,25 @@ export const socketEventMiddleware = <T extends SocketIO.Socket>(
     socket: SocketIO.Socket,
     middlewareCallback: (response: MySocket.Response.Handle, next: () => any) => void,
 ): T => {
-    const SocketON = socket.on.bind(socket);
+    // const SocketON = socket.on.bind(socket);
 
-    socket.on = (event: string, listener: (...args: any[]) => any): T => {
-        SocketON(event, (...args: any[]) => {
-            middlewareCallback(args.pop(), async () => {
-                return new Promise(async (resolve, reject) => {
-                    try {
-                        await listener(...args, (data: any) => {
-                            resolve(data);
-                        });
-                    } catch (err) {
-                        reject(err);
-                    }
-                });
-            });
-        });
-        return socket as any;
-    };
+    // socket.on = (event: string, listener: (...args: any[]) => any): T => {
+    //     return SocketON(event, (...args: any[]) => {
+    //         middlewareCallback(args.pop(), async () => {
+    //             return new Promise(async (resolve, reject) => {
+    //                 try {
+    //                     await listener(...args, (data: any) => {
+    //                         resolve(data);
+    //                     });
+    //                 } catch (err) {
+    //                     reject(err);
+    //                 }
+    //             });
+    //         });
+    //     }) as any;
+    // };
+
+    // socket
     return socket as any;
 };
 

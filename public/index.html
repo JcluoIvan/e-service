@@ -14,10 +14,13 @@
     <body>
         Hello World
         <div id="app" v-cloak>
-            <button @click.prevent="connect()">Connect</button>
-            <ul>
-                <li v-for="(msg, i) in messages" :key="i">{{ msg }}</li>
-            </ul>
+            <button @click.prevent="unbind()">Unbind</button>
+            <div>
+                <div v-for="(msg, i) in messages" :key="i">
+                    <pre> {{ msg.content }} </pre>
+                    <small>{{ msg.time | dt }}</small>
+                </div>
+            </div>
             <form @submit.prevent="send">
                 <input type="text" v-model="content"/>
                 <button>Send</button>
@@ -25,6 +28,7 @@
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
         <script src="/assets/js/app.js"></script>
     </body>
 </html>
