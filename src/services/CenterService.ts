@@ -50,17 +50,18 @@ export default class CenterService {
         });
 
         /* 成員登入 */
-        userService.on('login', ({ socket, id }) => {
-            const uitem = userService.getUser(id);
+        userService.on('login', ({ socket, uitem }) => {
 
             /* 不存在 or 非行專員則不開啟服務房間 */
-            if (!uitem || uitem.user.role !== UserRole.Supervisor) {
+            if (uitem.user.role !== UserRole.Supervisor) {
                 return;
             }
 
             socket.on('disconnect', () => {
-                this.rooms = this.rooms.filter((r) => r.id !== id);
+                this.rooms = this.rooms.filter((r) => r.id !== uitem.user.id);
             });
+
+
 
             const sroom = new ServiceRoom(uitem);
             this.rooms.push(sroom);

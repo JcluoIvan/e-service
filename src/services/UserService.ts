@@ -10,12 +10,24 @@ export interface UserItem {
     socket: IUser.Socket.Socket;
 }
 
-export default class UserService {
-    public events = new EventEmitter();
-    public on: IUser.UserServiceEvents.Listener = this.events.on;
+interface ListenerEvents<T> {
+    (event: string | symbol, listener: (...args: any[]) => void): T;
+    (event: 'login', listener: (data: { socket: IUser.Socket.Socket; uitem: UserItem }) => void): void;
+}
+
+interface EmitterEvents {
+    (event: string | symbol, ...args: any[]): boolean;
+    (event: 'login', data: { socket: IUser.Socket.Socket; uitem: UserItem }): boolean;
+}
+
+export default class UserService extends EventEmitter {
+    public on!: ListenerEvents<this>;
+    public emit!: EmitterEvents;
     private users = new Map<number, UserItem>();
 
     constructor(private nspUser: IUser.Socket.Namespace) {
+        super();
+
         this.nsp.on('connect', async (originSocket) => {
             logger.info('connect');
             /* middleware - handle error */
@@ -44,18 +56,17 @@ export default class UserService {
                     existsUser.socket.disconnect();
                 }
 
-                const userItem = {
+                const uitem = {
                     user,
                     socket,
                 };
 
-                this.users.set(user.id, userItem);
+                this.users.set(user.id, uitem);
 
                 socket.on('disconnect', () => {
                     this.users.delete(user.id);
                 });
-
-                this.events.emit('login', { socket, user });
+                this.emit('login', { socket, uitem });
             });
         });
     }
