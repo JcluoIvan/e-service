@@ -3,6 +3,8 @@ import logger from '../../logger';
 import { runInThisContext } from 'vm';
 import { UserItem } from '../UserService';
 import { getConnection } from 'typeorm';
+import { watch } from 'fs';
+import { EventEmitter } from 'events';
 
 let autoincrement = 0;
 
@@ -11,10 +13,10 @@ interface Data {
     createdAt: number;
 
     /* 專員 */
-    uitem: UserItem | null;
+    executive: UserItem | null;
 
     /* 顧客 */
-    citem: CustomerItem;
+    customer: CustomerItem;
 
     /* 鎖定, 由 watcher 操作, 鎖定後專員無法發話 */
     locked: boolean;
@@ -22,36 +24,35 @@ interface Data {
     /* 觀查者 */
     watcher: UserItem[];
 
-    messages: ITask.Message[];
+    /* 是否已關閉 */
+    closed: boolean;
 }
 
-export default class Task {
+interface EmitterEvents {
+    (event: string | symbol, ...args: any[]): boolean;
+    (event: 'close', task: Task): boolean;
+}
+interface ListenerEvents<T> {
+    (event: string | symbol, listener: (...args: any[]) => void): T;
+    (event: 'close', listener: (task: Task) => void): T;
+}
+
+export default class Task extends EventEmitter {
+    public emit!: EmitterEvents;
+    public on!: ListenerEvents<this>;
     private data: Data;
 
     constructor(customer: CustomerItem) {
+        super();
         this.data = {
             id: ++autoincrement,
             createdAt: new Date().getTime(),
-            citem: customer,
-            uitem: null,
+            customer,
+            executive: null,
             locked: false,
             watcher: [],
-            messages: [],
+            closed: false,
         };
-        logger.info('create task');
-        const t = customer.socket.on('send', this.fromCustomerMessage);
-        // customer.socket.on('send', (data, res) => {
-        //     const time = new Date().getTime();
-        //     const msg = { ...data, time };
-        //     this.fromCustomerMessage(msg);
-        //     res(time);
-        //     logger.info(data);
-        // });
-
-        customer.socket.on('unbind', () => {
-            customer.socket.removeListener('send', this.fromCustomerMessage);
-            logger.info('leave');
-        });
         // this.socket.join(this.roomName);
     }
 
@@ -64,33 +65,67 @@ export default class Task {
     }
 
     get socket() {
-        return this.data.citem.socket;
+        return this.data.customer.socket;
     }
 
-    private fromCustomerMessage = (data: ITask.Message, res: (time: number) => void) => {
+    get allUsers() {
+        const { executive, watcher } = this.data;
+        return executive ? [executive, ...watcher] : [...watcher];
+    }
+
+    public hasUser(userId: number) {
+        const { watcher, executive } = this.data;
+        return (executive && executive.user.id === userId) || watcher.some((w) => w.user.id === userId);
+    }
+
+    public sendMessage(data: MySocket.ListenerData.Message.Request) {
         const time = new Date().getTime();
-        const msg = { ...data, time };
-        if (this.data.uitem) {
-            this.data.uitem.socket.emit('send', msg);
-        }
+        const resMsg: MySocket.EmitterData.Message = {
+            id: new Date().getTime(),
+            ...data,
+            time,
+        };
 
-        this.data.watcher.forEach((w) => {
-            w.socket.emit('send', msg);
-        });
-        res(time);
-        logger.info(data);
-    };
+        this.socket.emit('center/send', resMsg);
 
-    private fromUserMessage(msg: ITask.Message, from: IUser.Socket.Socket) {
-        const sockets: IUser.Socket.Socket[] = [...this.data.watcher.map((w) => w.socket)];
-        if (this.data.uitem) {
-            sockets.push(this.data.uitem.socket);
-        }
-        this.socket.emit('send', msg);
-        sockets.forEach((s) => {
-            if (s !== from) {
-                s.emit('send', msg);
-            }
+        this.allUsers.forEach((u) => {
+            u.socket.emit('center/send', resMsg);
         });
+
+        return time;
+    }
+
+    public joinWatcher(uitem: UserItem) {
+        this.data.watcher.push(uitem);
+        const data: MySocket.EmitterData.CenterJoin = {
+            taskId: this.id,
+            user: {
+                id: uitem.user.id,
+                name: uitem.user.name,
+            },
+        };
+        this.socket.emit('center/join', data);
+        this.allUsers.forEach((u) => {
+            u.socket.emit('center/join', data);
+        });
+    }
+
+    public leaveWatcher(uitem: UserItem) {
+        const data: MySocket.EmitterData.CenterLeave = {
+            taskId: this.id,
+            userId: uitem.user.id,
+        };
+        this.socket.emit('center/leave', data);
+        this.allUsers.forEach((u) => {
+            u.socket.emit('center/leave', data);
+        });
+    }
+
+    public close() {
+        this.data.closed = true;
+        this.allUsers.forEach(({ socket }) => {
+            socket.emit('center/close', this.id);
+        });
+        this.emit('close', this);
     }
 }

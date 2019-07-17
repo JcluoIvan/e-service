@@ -1,5 +1,6 @@
 import { UserItem } from '../UserService';
 import Task from './Task';
+import { runInThisContext } from 'vm';
 
 export default class ServiceRoom {
     public tasks: Task[] = [];
@@ -27,6 +28,9 @@ export default class ServiceRoom {
         this.tasks.push(task);
         this.socket.nsp.emit('center/despatch-task', { taskId: task.id, roomId: this.id });
         task.socket.emit('center/join-room');
+        task.on('close', () => {
+            this.tasks = this.tasks.filter((t) => t !== task);
+        });
     }
 
     public toJson() {

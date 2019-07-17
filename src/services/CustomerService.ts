@@ -15,12 +15,12 @@ export interface CustomerItem {
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'login', listener: (data: { socket: IUser.Socket.Socket; citem: CustomerItem }) => void): void;
+    (event: 'connect', listener: (data: { socket: ICustomer.Socket.Socket; citem: CustomerItem }) => void): void;
 }
 
 interface EmitterEvents {
     (event: string | symbol, ...args: any[]): boolean;
-    (event: 'login', data: { socket: IUser.Socket.Socket; citem: CustomerItem }): boolean;
+    (event: 'connect', data: { socket: ICustomer.Socket.Socket; citem: CustomerItem }): boolean;
 }
 
 export default class CustomerService extends EventEmitter {
@@ -59,17 +59,17 @@ export default class CustomerService extends EventEmitter {
                 existsCustomer.socket.disconnect();
             }
 
-            const customer = {
+            const citem = {
                 token,
                 socket,
                 info,
             };
-            this.customers.set(token, customer);
+            this.customers.set(token, citem);
             socket.on('disconnect', () => {
                 this.customers.delete(token);
             });
 
-            this.events.emit('connect', { socket, token });
+            this.emit('connect', { socket, citem });
         });
     }
 

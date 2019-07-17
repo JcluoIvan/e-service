@@ -10,15 +10,16 @@ export interface UserItem {
     socket: IUser.Socket.Socket;
 }
 
+interface EmitterEvents {
+    (event: string | symbol, ...args: any[]): boolean;
+    (event: 'login', data: { socket: IUser.Socket.Socket; uitem: UserItem }): boolean;
+}
+
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
     (event: 'login', listener: (data: { socket: IUser.Socket.Socket; uitem: UserItem }) => void): void;
 }
 
-interface EmitterEvents {
-    (event: string | symbol, ...args: any[]): boolean;
-    (event: 'login', data: { socket: IUser.Socket.Socket; uitem: UserItem }): boolean;
-}
 
 export default class UserService extends EventEmitter {
     public on!: ListenerEvents<this>;

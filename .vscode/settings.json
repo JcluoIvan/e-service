@@ -10,5 +10,10 @@
     "javascript.implicitProjectConfig.experimentalDecorators": true,
     "editor.rulers": [80, 120],
     "window.title": "${dirty}${rootName}${separator}${activeEditorMedium}",
-    "typescript.preferences.importModuleSpecifier": "relative"
+    "typescript.preferences.importModuleSpecifier": "relative",
+
+    "prettier.tabWidth": 4,
+    "prettier.semi": true,
+    "prettier.arrowParens": "always",
+    "prettier.singleQuote": true
 }
