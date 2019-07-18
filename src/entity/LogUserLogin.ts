@@ -35,7 +35,7 @@ export class LogUserLogin {
         name: 'created_at',
         nullable: true,
         default: null,
-        type: 'timestamp',
+        type: 'datetime',
     })
     public createdAt!: string;
 }

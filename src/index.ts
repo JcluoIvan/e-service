@@ -9,6 +9,9 @@ import ExecutiveService from './services/ExecutiveService';
 import * as path from 'path';
 import CustomerService from './services/CustomerService';
 import CenterService from './services/CenterService';
+import { config } from 'dotenv';
+
+config();
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +19,12 @@ const io = socketio().listen(server);
 
 server.listen(3000, () => {
     logger.info(`Server Start on 3000`);
+
+    io.use((socket, next) => {
+        next();
+        logger.info(`nsp name = ${socket.nsp.name}`);
+        logger.info(`nsps = ${Object.keys(io.nsps)}`);
+    });
 
     const nspUser: IUser.Socket.Namespace = io.of('/user') as any;
     const nspCustomer: ICustomer.Socket.Namespace = io.of('/customer') as any;
@@ -25,7 +34,6 @@ server.listen(3000, () => {
 
     const executiveService = new ExecutiveService(userService);
     const centerService = new CenterService(userService, customerService);
-
 });
 
 const publicRoot = path.join(__dirname, '../public');

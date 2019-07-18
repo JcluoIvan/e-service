@@ -15,12 +15,12 @@ export interface CustomerItem {
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'connect', listener: (data: { socket: ICustomer.Socket.Socket; citem: CustomerItem }) => void): void;
+    (event: 'connect', listener: (data: { citem: CustomerItem }) => void): void;
 }
 
 interface EmitterEvents {
     (event: string | symbol, ...args: any[]): boolean;
-    (event: 'connect', data: { socket: ICustomer.Socket.Socket; citem: CustomerItem }): boolean;
+    (event: 'connect', data: { citem: CustomerItem }): boolean;
 }
 
 export default class CustomerService extends EventEmitter {
@@ -37,6 +37,7 @@ export default class CustomerService extends EventEmitter {
                 id: originSocket.handshake.query.id,
                 name: originSocket.handshake.query.name,
             };
+            logger.info(info);
 
             if (!token) {
                 originSocket.disconnect();
@@ -69,7 +70,7 @@ export default class CustomerService extends EventEmitter {
                 this.customers.delete(token);
             });
 
-            this.emit('connect', { socket, citem });
+            this.emit('connect', { citem });
         });
     }
 

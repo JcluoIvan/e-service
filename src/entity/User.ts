@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn, Unique } from 'typeorm';
+import logger from '../logger';
 
 export enum UserRole {
     /* 主管 */
@@ -54,7 +55,7 @@ export class User {
         name: 'updated_at',
         nullable: true,
         default: null,
-        type: 'timestamp',
+        type: 'datetime',
     })
     public updatedAt!: string;
 
@@ -62,7 +63,7 @@ export class User {
         name: 'created_at',
         nullable: true,
         default: null,
-        type: 'timestamp',
+        type: 'datetime',
     })
     public createdAt!: string;
 

@@ -1,3 +1,10 @@
+declare namespace NodeJS {
+    interface ProcessEnv {
+        IMAGE_UPLOAD_PATH: string;
+        IMAGE_URI: string;
+    }
+}
+
 declare namespace MySocket {
     namespace Response {
         interface Data<T = any> {
@@ -10,15 +17,15 @@ declare namespace MySocket {
         type Handle<T = any> = (res?: Data<T>) => void;
     }
 
-    type ListenerHandle<D, R = any> = (data: D, response: Response.Handle<R>) => void;
+    type ListenerHandle<D = any, R = any> = (data: D, response: Response.Handle<R>) => void;
 
     namespace EmitterData {
         interface Message {
             id: number;
             taskId: number;
-            content: string | Buffer;
-            type: 'text/plain' | 'image/jpeg' | 'image/png';
-            time: number;
+            content: string;
+            type: 'text' | 'image';
+            time: string;
         }
         interface CenterJoin {
             taskId: number;
@@ -36,8 +43,12 @@ declare namespace MySocket {
         namespace Message {
             interface Request {
                 taskId: number;
-                content: string | Buffer;
+                content: string;
                 type: 'text/plain' | 'image/jpeg' | 'image/png';
+            }
+            interface Response {
+                id: number;
+                time: string;
             }
         }
     }
@@ -52,7 +63,7 @@ declare namespace MySocket {
         /** 主管離開 */
         (event: 'center/leave', data: EmitterData.CenterLeave): boolean;
         /** 任務關閉 */
-        (event: 'center/close', taskId: number): boolean;
+        (event: 'center/close', data: { taskId: number }): boolean;
     }
 
     interface Listener<T = () => void, S = any> {
@@ -61,12 +72,48 @@ declare namespace MySocket {
         (event: 'disconnect'): T;
 
         /** 收到訊息 */
-        (event: 'center/send', listener: ListenerHandle<ListenerData.Message.Request, number>): T;
+        (
+            event: 'center/send',
+            listener: ListenerHandle<ListenerData.Message.Request, ListenerData.Message.Response>,
+        ): T;
     }
 }
 
 declare namespace IUser {
     namespace Socket {
+        namespace EmitterData {
+            namespace Center {
+                interface Task {
+                    id: number;
+                    customer: {
+                        id: string;
+                        name: string;
+                    };
+                    createdAt: string;
+                }
+
+                interface TaskDetail extends Task {
+                    watchers: {
+                        id: number;
+                        name: string;
+                    }[];
+                    executive: {
+                        id: number;
+                        name: string;
+                    };
+                    startAt: string;
+                    message: MySocket.EmitterData.Message[];
+                }
+
+                interface Room {
+                    id: number;
+                    ready: boolean;
+                    user: { id: number; name: string };
+                    tasks: Task[];
+                }
+            }
+        }
+
         namespace ListenerData {
             namespace Login {
                 interface Request {
@@ -87,8 +134,20 @@ declare namespace IUser {
 
             (event: 'center/task-unlock', data: { taskId: number }): boolean;
 
+            /** 更新任務列表 */
+            (event: 'center/task-queue', data: EmitterData.Center.Task[]): boolean;
+
             /** 任務分派 */
             (event: 'center/despatch-task', data: { taskId: number; roomId: number }): boolean;
+
+            /** 更新所有房間 */
+            (event: 'center/rooms', data: EmitterData.Center.Room[]): boolean;
+
+            /** 更新單一房間 */
+            (event: 'center/room', data: EmitterData.Center.Room): boolean;
+
+            /** 更新任務詳細內容 */
+            (event: 'center/task-detail', data: EmitterData.Center.TaskDetail): boolean;
         }
 
         interface Listener<T = any> extends MySocket.Listener<T, Socket> {
@@ -107,6 +166,15 @@ declare namespace IUser {
 
             /** 主管離開 task */
             (event: 'center/leave', listener: MySocket.ListenerHandle<number>): T;
+
+            /** 查詢所有房間 */
+            (event: 'center/rooms', listener: MySocket.ListenerHandle): T;
+
+            /** 開啟 */
+            (event: 'center/room-ready', listener: MySocket.ListenerHandle): T;
+
+            /** 關閉 */
+            (event: 'center/room-unready', listener: MySocket.ListenerHandle): T;
         }
         interface Socket extends SocketIO.Socket {
             on: Listener<this>;

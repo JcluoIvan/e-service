@@ -64,3 +64,6 @@ typings/
 
 ormconfig.js
 .env
+
+log.*
+log
