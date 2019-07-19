@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn, Unique } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    OneToOne,
+    JoinColumn,
+    Unique,
+    BaseEntity,
+} from 'typeorm';
 import logger from '../logger';
 
 export enum UserRole {
@@ -9,31 +18,35 @@ export enum UserRole {
 }
 
 @Entity()
-@Unique(['username'])
-export class User {
+@Unique(['companyId', 'username'])
+export class User extends BaseEntity {
     @PrimaryGeneratedColumn({
         unsigned: true,
     })
     public id!: number;
 
     @Column({
-        type: 'varchar',
-        length: 50,
-        nullable: false,
+        name: 'company_id',
+        type: 'int',
+        unsigned: true,
     })
-    public username!: string | null;
+    public companyId!: number;
 
     @Column({
         type: 'varchar',
         length: 50,
-        nullable: false,
     })
-    public password!: string | null;
+    public username!: string;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+    })
+    public password!: string;
 
     @Column({
         type: 'varchar',
         length: 20,
-        nullable: false,
     })
     public name!: string;
 

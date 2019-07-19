@@ -1,11 +1,14 @@
-import UserService, { UserItem } from './UserService';
-import CustomerService, { CustomerItem } from './CustomerService';
+import UserService from './UserService';
+import CustomerService from './CustomerService';
 import logger from '../logger';
 import ServiceTask from './center/ServiceTask';
 import ServiceRoom from './center/ServiceRoom';
 import { UserRole } from '../entity/User';
 import { throwError, responseSuccess } from '../support';
 import { TaskNotFoundError, NotInTaskError } from '../exceptions/center.error';
+import CustomerToken from './tokens/CustomerToken';
+import UserToken from './tokens/UserToken';
+import BaseService from './BaseService';
 
 enum Mode {
     /* 平均 */
@@ -17,15 +20,14 @@ enum Mode {
 /**
  * 服務中心
  */
-export default class CenterService {
+export default class CenterService extends BaseService {
     /* 待處理佇列 (客服人員皆忙錄中時) */
     private taskQueues: ServiceTask[] = [];
+    private taskAssign: ServiceTask[] = [];
 
-    private tasks = new Map<number, ServiceTask>();
+    private mapTasks = new Map<number, ServiceTask>();
 
-    // private rooms: ServiceRoom[] = [];
-
-    private rooms = new Map<number, ServiceRoom>();
+    private mapRooms = new Map<number, ServiceRoom>();
 
     private watchers = new Map<number, ServiceTask[]>();
 
@@ -34,14 +36,24 @@ export default class CenterService {
         max: 2,
     };
 
-    private loopIndex = 0;
+    private loopQueues: ServiceRoom[] = [];
+
+    get rooms() {
+        return Array.from(this.mapRooms.values());
+    }
+
+    get tasks() {
+        return Array.from(this.mapTasks.values());
+    }
 
     constructor(private userService: UserService, private customerService: CustomerService) {
+        super();
+
         /* customer connect */
-        customerService.on('connect', async ({ citem }) => this.onCustomerConnected(citem));
+        customerService.on('connect', async ({ ctoken: citem }) => this.onCustomerConnected(citem));
 
         /* 成員登入 */
-        userService.on('login', ({ uitem }) => this.onUserConnected(uitem));
+        userService.on('connect', ({ utoken }) => this.onUserConnected(utoken));
     }
 
     /**
@@ -49,27 +61,22 @@ export default class CenterService {
      * @param socket socket
      * @param citem 顧客資料
      */
-    private async onCustomerConnected(citem: CustomerItem) {
-        if (!citem) {
-            logger.error('error. not found customer data');
-            return;
-        }
-
+    private async onCustomerConnected(ctoken: CustomerToken) {
         /* 建立 task */
-        const task = await this.createTask(citem);
+        const task = await this.createTask(ctoken);
 
         /* 顧客主動中斷 (已完成) */
-        citem.socket.on('center/close', () => {
+        ctoken.socket.on('center/close', () => {
             task.close();
         });
 
         /** 發送訊息 */
-        citem.socket.on('center/send', async (data, res) => {
+        ctoken.socket.on('center/send', async (data, res) => {
             const { id, time } = await task.sendMessage(data);
             res(responseSuccess({ id, time }));
         });
 
-        citem.socket.on('disconnect', () => {
+        ctoken.socket.on('disconnect', () => {
             task.close();
         });
 
@@ -79,56 +86,58 @@ export default class CenterService {
     /**
      * 成員連線
      * @param socket socket
-     * @param uitem 成員資訊
+     * @param utoken 成員資訊
      */
-    private async onUserConnected(uitem: UserItem) {
+    private async onUserConnected(utoken: UserToken) {
         /* 建立房間 */
 
-        const sroom = await this.createRoom(uitem);
+        const sroom = await this.findOrGenerateRoom(utoken);
 
-        uitem.socket.on('disconnect', () => {
+        this.updateTasks(utoken.socket);
+        this.updateRooms(utoken.socket);
+
+        utoken.socket.on('disconnect', () => {
             /** 移除房間 */
             sroom.disconnect();
         });
 
-        uitem.socket.on('center/send', async (data, res) => {
-            const task = this.tasks.get(data.taskId);
+        utoken.socket.on('center/send', async (data, res) => {
+            const task = this.mapTasks.get(data.taskId);
             if (!task) {
                 res(throwError(new TaskNotFoundError()));
                 return;
             }
-            const { id, time } = await task.sendMessage(data, uitem.user.id);
+            const { id, time } = await task.sendMessage(data, utoken.user.id);
             res(responseSuccess({ id, time }));
         });
 
-        uitem.socket.on('center/room-ready', (data, res) => {
-            sroom.turnOnReady();
-        });
+        utoken.socket.on('center/room-ready', (res) => sroom.turnOnReady());
+        utoken.socket.on('center/room-unready', (res) => sroom.turnOffReady());
 
         /** 僅主管才能使用的功能 */
-        if (uitem.user.role === UserRole.Supervisor) {
-            uitem.socket.on('center/join', (taskId, res) => {
-                const task = this.tasks.get(taskId);
-                const warr = this.watchers.get(uitem.user.id) || [];
+        if (utoken.user.role === UserRole.Supervisor) {
+            utoken.socket.on('center/join', (taskId, res) => {
+                const task = this.mapTasks.get(taskId);
+                const warr = this.watchers.get(utoken.user.id) || [];
                 if (!task) {
                     res(throwError(new TaskNotFoundError()));
                     return;
                 }
-                task.joinWatcher(uitem);
+                task.joinWatcher(utoken);
                 warr.push(task);
-                this.watchers.set(uitem.user.id, warr);
+                this.watchers.set(utoken.user.id, warr);
                 res();
             });
 
-            uitem.socket.on('center/leave', (taskId, res) => {
-                const task = this.tasks.get(taskId);
+            utoken.socket.on('center/leave', (taskId, res) => {
+                const task = this.mapTasks.get(taskId);
                 if (!task) {
                     res(throwError(new TaskNotFoundError()));
                     return;
                 }
-                const warr = (this.watchers.get(uitem.user.id) || []).filter((t) => t.id !== task.id);
-                task.leaveWatcher(uitem.user.id);
-                this.watchers.set(uitem.user.id, warr);
+                const warr = (this.watchers.get(utoken.user.id) || []).filter((t) => t.id !== task.id);
+                task.leaveWatcher(utoken.user.id);
+                this.watchers.set(utoken.user.id, warr);
                 res();
             });
         }
@@ -139,79 +148,99 @@ export default class CenterService {
         const setting = this.setting;
         let room: ServiceRoom | null = null;
 
-        if (this.taskQueues.length === 0) {
+        if (this.taskQueues.length === 0 || this.loopQueues.length === 0) {
             return;
         }
-        const rooms = Array.from(this.rooms.values()).sort((a, b) => a.user.id - b.user.id);
-
         if (setting.mode === Mode.Balance) {
-            room = rooms.find((r) => r.serviceTasks.length < setting.max) || null;
+            room = this.loopQueues.find((r) => r.tasks.length < setting.max) || null;
         } else if (setting.mode === Mode.Loop) {
-            const numRooms = rooms.length;
-            let idx = this.loopIndex++ / rooms.length;
-            const maxIdx = idx + numRooms;
-            while (idx < maxIdx || room) {
-                room = rooms[idx % numRooms];
-                room = room && room.serviceTasks.length < setting.max ? room : null;
-                idx += 1;
+            const idx = this.loopQueues.findIndex((r) => r.tasks.length < setting.max);
+            if (idx >= 0) {
+                room = this.loopQueues[idx];
+                const pass = this.loopQueues.splice(0, idx + 1);
+                this.loopQueues = [...this.loopQueues, ...pass];
             }
         }
         const task = this.taskQueues.shift();
-
+        logger.info(room, task);
         if (room && task) {
             room.addTask(task);
+            logger.info('despatch');
         }
     }
 
-    private async createTask(citem: CustomerItem) {
-        const task = await ServiceTask.createTask(citem);
+    private updateTasks(socket: IUser.Socket | IUser.Socket.Namespace) {
+        socket.emit('center/tasks', this.tasks.map((t) => t.toJson()));
+    }
+
+    private updateTask(task: ServiceTask) {
+        this.userService.nsp.emit('center/task', task.toJson());
+    }
+
+    private updateRooms(io: IUser.Socket | IUser.Socket.Namespace) {
+        io.emit('center/rooms', this.rooms.map((r) => r.toJson()));
+    }
+
+    private async createTask(ctoken: CustomerToken) {
+        const task = await ServiceTask.createTask(ctoken);
         this.taskQueues.push(task);
-        this.tasks.set(task.id, task);
+        this.mapTasks.set(task.id, task);
 
         task.on('close', () => {
-            this.tasks.delete(task.id);
+            this.mapTasks.delete(task.id);
             this.taskQueues = this.taskQueues.filter((t) => t !== task);
             this.dispatchTask();
         });
+
+        this.updateTask(task);
+
         return task;
     }
 
-    private async createRoom(uitem: UserItem) {
-        const room = this.rooms.get(uitem.user.id) || new ServiceRoom(uitem.user);
+    private async findOrGenerateRoom(utoken: UserToken) {
+        const find = this.mapRooms.get(utoken.user.id);
 
-        if (room.isOnly) {
-            room.disconnect();
+        if (find) {
+            if (find.isOnly) {
+                find.disconnect();
+            }
+            find.connect(utoken);
+            return find;
         }
 
+        const room = new ServiceRoom(utoken);
+
         room.on('ready', () => {
-            uitem.socket.nsp.emit('center/room', room.toJson());
+            this.loopQueues.push(room);
+            this.dispatchTask();
+            utoken.socket.nsp.emit('center/room-ready', { userId: room.id });
         });
 
         room.on('unready', () => {
-            uitem.socket.nsp.emit('center/room', room.toJson());
+            this.loopQueues = this.loopQueues.filter((lq) => lq !== room);
+            utoken.socket.nsp.emit('center/room-unready', { userId: room.id });
         });
 
         room.on('add-task', (task) => {
-            uitem.socket.nsp.emit('center/despatch-task', { taskId: task.id, roomId: room.id });
+            utoken.socket.nsp.emit('center/despatch-task', { taskId: task.id, userId: room.id });
         });
 
         room.on('connect', () => {
-            uitem.socket.emit('center/room', room.toJson());
+            utoken.socket.emit('center/room', room.toJson());
         });
 
         room.on('disconnect', () => {
-            uitem.socket.nsp.emit('center/room', room.toJson());
+            utoken.socket.nsp.emit('center/room', room.toJson());
 
             /** 離開所有 watch 的 task */
-            const warr = this.watchers.get(uitem.user.id) || [];
+            const warr = this.watchers.get(utoken.user.id) || [];
             warr.forEach((t) => {
-                t.leaveWatcher(uitem.user.id);
+                t.leaveWatcher(utoken.user.id);
             });
-            this.watchers.delete(uitem.user.id);
+            this.watchers.delete(utoken.user.id);
         });
 
-        this.rooms.set(uitem.user.id, room);
-        room.connect(uitem);
+        this.mapRooms.set(utoken.user.id, room);
         return room;
     }
 }

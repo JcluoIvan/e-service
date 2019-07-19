@@ -1,80 +1,78 @@
 import { socketEventMiddleware, responseSuccess, throwError } from '../support';
 import logger from '../logger';
 import { EventEmitter } from 'events';
+import { Company } from '../entity/Company';
+import CustomerToken, { CustomerData } from './tokens/CustomerToken';
 
 export interface CustomerInformation {
     id: string;
     name: string;
 }
 
-export interface CustomerItem {
-    token: string;
-    info: CustomerInformation;
-    socket: ICustomer.Socket.Socket;
-}
-
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'connect', listener: (data: { citem: CustomerItem }) => void): void;
+    (event: 'connect', listener: (data: { ctoken: CustomerToken }) => void): void;
 }
 
 interface EmitterEvents {
     (event: string | symbol, ...args: any[]): boolean;
-    (event: 'connect', data: { citem: CustomerItem }): boolean;
+    (event: 'connect', data: { ctoken: CustomerToken }): boolean;
+}
+
+interface Data {
+    mapCustomers: Map<string, CustomerToken>;
+    company: Company;
+    nsp: ICustomer.Socket.Namespace;
 }
 
 export default class CustomerService extends EventEmitter {
     public on!: ListenerEvents<this>;
     public emit!: EmitterEvents;
-    private customers = new Map<string, CustomerItem>();
 
-    constructor(nsp: ICustomer.Socket.Namespace) {
+    private data: Data;
+
+    get customers() {
+        return Array.from(this.data.mapCustomers.values());
+    }
+
+    constructor(company: Company, nsp: ICustomer.Socket.Namespace) {
         super();
+        this.data = {
+            mapCustomers: new Map(),
+            company,
+            nsp,
+        };
 
-        nsp.on('connect', async (originSocket: ICustomer.Socket.Socket) => {
-            const token: string = originSocket.handshake.query.token;
-            const info = {
-                id: originSocket.handshake.query.id,
-                name: originSocket.handshake.query.name,
-            };
-            logger.info(info);
+        nsp.on('connect', async (socket: ICustomer.Socket) => {
+            const id: string = socket.handshake.query.id || null;
+            const name: string = socket.handshake.query.name || '';
 
-            if (!token) {
-                originSocket.disconnect();
-                return;
-            }
+            const ctoken = await this.findOrGenerateCustomerToken({ id, name });
+            await ctoken.connect(socket);
 
-            const socket: ICustomer.Socket.Socket = socketEventMiddleware<ICustomer.Socket.Socket>(
-                originSocket,
-                async (response, next) => {
-                    try {
-                        response(responseSuccess(await next()));
-                    } catch (err) {
-                        logger.error(`Error: ${err.message}`);
-                        response(throwError(err));
-                    }
-                },
-            );
-            const existsCustomer = this.customers.get(token);
-            if (existsCustomer) {
-                existsCustomer.socket.disconnect();
-            }
-
-            const citem = {
-                token,
-                socket,
-                info,
-            };
-            this.customers.set(token, citem);
             socket.on('disconnect', () => {
-                this.customers.delete(token);
+                ctoken.onDisconnect();
             });
 
-            this.emit('connect', { citem });
+            this.emit('connect', { ctoken });
         });
     }
 
-    public getCustomer(token: string) {
-        return this.customers.get(token);
+    public getCustomer(id: string) {
+        return this.data.mapCustomers.get(id);
+    }
+
+    public async findOrGenerateCustomerToken(cdata: CustomerData) {
+        const find = this.customers.find((c) => c.socket.id === cdata.id);
+        if (find) {
+            return find;
+        }
+
+        const ctoken = new CustomerToken(cdata);
+        this.data.mapCustomers.set(ctoken.customer.id, ctoken);
+        ctoken.on('destroy', () => {
+            this.data.mapCustomers.delete(ctoken.customer.id);
+        });
+        return ctoken;
     }
 }

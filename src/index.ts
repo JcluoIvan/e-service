@@ -10,6 +10,8 @@ import * as path from 'path';
 import CustomerService from './services/CustomerService';
 import CenterService from './services/CenterService';
 import { config } from 'dotenv';
+import { loadCompanyNamespace } from './services/NamespaceService';
+import { createConnection } from 'typeorm';
 
 config();
 
@@ -17,7 +19,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio().listen(server);
 
-server.listen(3000, () => {
+server.listen(3000, async () => {
+    const connection = await createConnection();
+
     logger.info(`Server Start on 3000`);
 
     io.use((socket, next) => {
@@ -26,14 +30,13 @@ server.listen(3000, () => {
         logger.info(`nsps = ${Object.keys(io.nsps)}`);
     });
 
-    const nspUser: IUser.Socket.Namespace = io.of('/user') as any;
-    const nspCustomer: ICustomer.Socket.Namespace = io.of('/customer') as any;
+    loadCompanyNamespace(io);
 
-    const userService = new UserService(nspUser);
-    const customerService = new CustomerService(nspCustomer);
+    // const userService = new UserService(nspUser);
+    // const customerService = new CustomerService(nspCustomer);
 
-    const executiveService = new ExecutiveService(userService);
-    const centerService = new CenterService(userService, customerService);
+    // const executiveService = new ExecutiveService(userService);
+    // const centerService = new CenterService(userService, customerService);
 });
 
 const publicRoot = path.join(__dirname, '../public');

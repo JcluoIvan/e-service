@@ -1,4 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn, Unique, Index } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    OneToOne,
+    JoinColumn,
+    Unique,
+    Index,
+    BaseEntity,
+} from 'typeorm';
 
 export enum MessageType {
     /* 文字內容 */
@@ -9,7 +19,7 @@ export enum MessageType {
 }
 
 @Entity()
-export class Message {
+export class Message extends BaseEntity {
     @PrimaryGeneratedColumn({
         unsigned: true,
     })

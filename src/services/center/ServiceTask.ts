@@ -1,6 +1,3 @@
-import { CustomerItem } from '../CustomerService';
-import logger from '../../logger';
-import { UserItem } from '../UserService';
 import { EventEmitter } from 'events';
 import { Task } from '../../entity/Task';
 import * as moment from 'moment';
@@ -9,6 +6,8 @@ import { Message, MessageType } from '../../entity/Message';
 import { NotInTaskError } from '../../exceptions/center.error';
 import * as fs from 'fs';
 import * as path from 'path';
+import CustomerToken from '../tokens/CustomerToken';
+import UserToken from '../tokens/UserToken';
 
 type CacheMessage = MySocket.EmitterData.Message;
 
@@ -29,8 +28,8 @@ export default class ServiceTask extends EventEmitter {
         return this.task.id;
     }
 
-    get customerId() {
-        return this.task.customerId;
+    get name() {
+        return this.task.customerName;
     }
 
     get customerName() {
@@ -48,19 +47,19 @@ export default class ServiceTask extends EventEmitter {
 
     /**
      * 建立任務
-     * @param customer 顧客連線資訊
+     * @param ctoken 顧客連線資訊
      */
-    public static async createTask(customer: CustomerItem) {
+    public static async createTask(ctoken: CustomerToken) {
         const createdAt = moment();
         const taskEntity = new Task();
         taskEntity.executiveId = 0;
-        taskEntity.customerId = customer.info.id;
-        taskEntity.customerName = customer.info.name;
+        taskEntity.customerId = ctoken.customer.id;
+        taskEntity.customerName = ctoken.customer.name;
         taskEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
 
         const task = await taskEntity.save();
 
-        return new ServiceTask(customer, task);
+        return new ServiceTask(ctoken, task);
     }
     public emit!: EmitterEvents;
     public on!: ListenerEvents<this>;
@@ -70,10 +69,11 @@ export default class ServiceTask extends EventEmitter {
     /** 對話記錄 */
     private messages: CacheMessage[] = [];
     /** 服務專員 */
-    private executive: UserItem | null = null;
-    private watchers: UserItem[] = [];
+    private executive: UserToken | null = null;
+    private watchers: UserToken[] = [];
+    private disconnectedAt: string | null = null;
 
-    constructor(private customer: CustomerItem, private task: Task) {
+    constructor(private customer: CustomerToken, private task: Task) {
         super();
     }
 
@@ -85,9 +85,10 @@ export default class ServiceTask extends EventEmitter {
      * 分配至專員房間, 開始服務
      * @param executive 專員資訊
      */
-    public async start(executive: UserItem) {
+    public async start(executive: UserToken) {
         const startAt = moment();
         this.task.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
+        this.task.executiveId = executive.user.id;
         this.task = await this.task.save();
         this.customer.socket.emit('center/start');
         this.executive = executive;
@@ -100,25 +101,26 @@ export default class ServiceTask extends EventEmitter {
             throw new NotInTaskError();
         }
 
-        const message = new Message();
-        message.taskId = this.id;
-        message.createdAt = time.format('YYYY-MM-DD HH:mm:ss');
-        message.userId = userId || 0;
+        const messageEntity = new Message();
+        messageEntity.taskId = this.id;
+        messageEntity.createdAt = time.format('YYYY-MM-DD HH:mm:ss');
+        messageEntity.userId = userId || 0;
 
         switch (data.type) {
             case 'image/jpeg':
-                message.content = await this.uploadImage(data.content, 'jpg');
-                message.type = MessageType.Image;
+                messageEntity.content = await this.uploadImage(data.content, 'jpg');
+                messageEntity.type = MessageType.Image;
                 break;
             case 'image/png':
-                message.content = await this.uploadImage(data.content, 'png');
-                message.type = MessageType.Image;
+                messageEntity.content = await this.uploadImage(data.content, 'png');
+                messageEntity.type = MessageType.Image;
                 break;
             default:
-                message.content = data.content;
-                message.type = MessageType.Text;
+                messageEntity.content = data.content;
+                messageEntity.type = MessageType.Text;
                 break;
         }
+        const message = await messageEntity.save();
 
         const cacheMessage: CacheMessage = {
             id: message.id,
@@ -139,13 +141,13 @@ export default class ServiceTask extends EventEmitter {
         return cacheMessage;
     }
 
-    public joinWatcher(uitem: UserItem) {
-        this.watchers.push(uitem);
+    public joinWatcher(utoken: UserToken) {
+        this.watchers.push(utoken);
         const data: MySocket.EmitterData.CenterJoin = {
             taskId: this.id,
             user: {
-                id: uitem.user.id,
-                name: uitem.user.name,
+                id: utoken.user.id,
+                name: utoken.user.name,
             },
         };
         this.customer.socket.emit('center/join', data);
@@ -172,6 +174,10 @@ export default class ServiceTask extends EventEmitter {
         this.emit('close', this);
     }
 
+    public onDisconnected() {
+        this.disconnectedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+    }
+
     public async uploadImage(data: string, ext: 'jpg' | 'png') {
         return new Promise<string>((resolve, reject) => {
             const filename = `${md5(data)}.${ext}`;
@@ -185,20 +191,18 @@ export default class ServiceTask extends EventEmitter {
     public toJson(detail = false) {
         let data: IUser.Socket.EmitterData.Center.Task | IUser.Socket.EmitterData.Center.TaskDetail = {
             id: this.id,
-            customer: {
-                id: this.customerId,
-                name: this.customerName,
-            },
+            name: this.name,
+            executeId: this.executive ? this.executive.user.id : 0,
+            startAt: this.task.startAt,
             createdAt: this.task.createdAt,
+            disconnectedAt: this.disconnectedAt,
         };
 
         if (detail) {
             const { executive, watchers } = this;
             data = {
                 ...data,
-                watchers: watchers.map((w) => ({ id: w.user.id, name: w.user.name })),
-                executive: executive ? { id: executive.user.id, name: executive.user.name } : { id: 0, name: '' },
-                startAt: this.task.startAt,
+                watchers: watchers.map((w) => w.user.id),
                 message: this.messages,
             };
         }

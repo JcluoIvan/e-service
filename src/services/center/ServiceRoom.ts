@@ -1,9 +1,9 @@
-import { UserItem } from '../UserService';
 import ServiceTask from './ServiceTask';
 import { EventEmitter } from 'events';
 import * as moment from 'moment';
 import { RoomDisconnectError } from '../../exceptions/center.error';
 import { User } from '../../entity/User';
+import UserToken from '../tokens/UserToken';
 
 interface EmitterEvents {
     (event: string | symbol, ...args: any[]): boolean;
@@ -17,46 +17,41 @@ interface ListenerEvents<T> {
 }
 
 interface Data {
-    socket: IUser.Socket.Socket | null;
-    id: number;
-    name: string;
+    utoken: UserToken;
+    tasks: ServiceTask[];
 }
 
 export default class ServiceRoom extends EventEmitter {
-    public serviceTasks: ServiceTask[] = [];
     public on!: ListenerEvents<this>;
     public emit!: EmitterEvents;
-    private uitem: UserItem | null = null;
 
-    private data: Data = {
-        socket: null,
-        id: 0,
-        name: '',
-    };
+    private data: Data;
 
     /** 是否開啟 (開啟狀態才能經由系統自動分配顧客) */
     private ready = false;
 
-    get id() {
-        return this.user.id;
-    }
-
     get isOnly() {
-        return this.data.socket;
-    }
-
-    get user() {
-        return this.data;
+        return this.data.utoken.isOnly;
     }
 
     get tasks() {
-        return this.serviceTasks;
+        return this.data.tasks;
     }
 
-    constructor(user: User) {
+    get id() {
+        return this.data.utoken.user.id;
+    }
+
+    get name() {
+        return this.data.utoken.user.name;
+    }
+
+    constructor(utoken: UserToken) {
         super();
-        this.data.id = user.id;
-        this.data.name = user.name;
+        this.data = {
+            utoken,
+            tasks: [],
+        };
     }
 
     public turnOnReady() {
@@ -70,44 +65,35 @@ export default class ServiceRoom extends EventEmitter {
     }
 
     public addTask(task: ServiceTask) {
-        if (!this.uitem) {
-            throw new RoomDisconnectError();
-        }
-
-        this.serviceTasks.push(task);
+        this.data.tasks.push(task);
 
         task.on('close', () => {
-            this.serviceTasks = this.serviceTasks.filter((t) => t !== task);
+            this.data.tasks = this.data.tasks.filter((t) => t !== task);
         });
 
-        task.start(this.uitem);
+        task.start(this.data.utoken);
 
         this.emit('add-task', task);
     }
 
-    public connect(uitem: UserItem) {
-        this.data.socket = uitem.socket;
-        this.data.name = uitem.user.name;
+    public connect(utoken: UserToken) {
+        // this.data.socket = utoken.socket;
+        // this.data.name = utoken.user.name;
         this.emit('connect');
     }
 
     /** 專員離線, 關閉房間 */
     public disconnect() {
-        this.ready = false;
-        this.data.socket = null;
+        this.turnOffReady();
         this.emit('disconnect');
     }
 
     public toJson(): IUser.Socket.EmitterData.Center.Room {
-        const user = this.user;
+        const user = this.data.utoken.user;
         return {
             id: this.id,
+            name: this.name,
             ready: this.ready,
-            tasks: this.serviceTasks.map((t) => t.toJson()),
-            user: {
-                id: user.id,
-                name: user.name,
-            },
         };
     }
 }

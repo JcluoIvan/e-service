@@ -1,4 +1,4 @@
-import UserService, { UserItem } from './UserService';
+import UserService from './UserService';
 import { User, UserRole } from '../entity/User';
 import logger from '../logger';
 
@@ -8,7 +8,6 @@ export default class ExecutiveService {
             if (uitem.user.role !== UserRole.Executive) {
                 return;
             }
-
             logger.info('executive login');
         });
     }

@@ -85,31 +85,22 @@ declare namespace IUser {
             namespace Center {
                 interface Task {
                     id: number;
-                    customer: {
-                        id: string;
-                        name: string;
-                    };
+                    name: string;
+                    executeId: number;
+                    disconnectedAt: string | null;
+                    startAt: string;
                     createdAt: string;
                 }
 
                 interface TaskDetail extends Task {
-                    watchers: {
-                        id: number;
-                        name: string;
-                    }[];
-                    executive: {
-                        id: number;
-                        name: string;
-                    };
-                    startAt: string;
+                    watchers: number[];
                     message: MySocket.EmitterData.Message[];
                 }
 
                 interface Room {
                     id: number;
+                    name: string;
                     ready: boolean;
-                    user: { id: number; name: string };
-                    tasks: Task[];
                 }
             }
         }
@@ -122,14 +113,26 @@ declare namespace IUser {
                 }
                 interface Response {
                     id: number;
-                    role: 'admin' | 'supervisor' | 'executive';
+                    username: string;
                     name: string;
+                    role: 'admin' | 'supervisor' | 'executive';
+                    token: string;
+                    loginAt: string;
                 }
             }
         }
 
         interface Emitter extends MySocket.Emitter {
             // (event: 'firm', data: { id: number; name: string }): boolean;
+            /** 重新連線 */
+            (event: 'login', data: ListenerData.Login.Response): boolean;
+
+            (event: 'message/error', data: { message: string }): boolean;
+
+            (event: 'center/tasks', data: EmitterData.Center.Task[]): boolean;
+
+            (event: 'center/task', data: EmitterData.Center.Task): boolean;
+
             (event: 'center/task-lock', data: { taskId: number }): boolean;
 
             (event: 'center/task-unlock', data: { taskId: number }): boolean;
@@ -138,7 +141,7 @@ declare namespace IUser {
             (event: 'center/task-queue', data: EmitterData.Center.Task[]): boolean;
 
             /** 任務分派 */
-            (event: 'center/despatch-task', data: { taskId: number; roomId: number }): boolean;
+            (event: 'center/despatch-task', data: { taskId: number; userId: number }): boolean;
 
             /** 更新所有房間 */
             (event: 'center/rooms', data: EmitterData.Center.Room[]): boolean;
@@ -148,6 +151,12 @@ declare namespace IUser {
 
             /** 更新任務詳細內容 */
             (event: 'center/task-detail', data: EmitterData.Center.TaskDetail): boolean;
+
+            /** 某專員轉為 ready */
+            (event: 'center/room-ready', data: { userId: number }): boolean;
+
+            /** 某專員轉為 unready */
+            (event: 'center/room-unready', data: { userId: number }): boolean;
         }
 
         interface Listener<T = any> extends MySocket.Listener<T, Socket> {
@@ -171,21 +180,21 @@ declare namespace IUser {
             (event: 'center/rooms', listener: MySocket.ListenerHandle): T;
 
             /** 開啟 */
-            (event: 'center/room-ready', listener: MySocket.ListenerHandle): T;
+            (event: 'center/room-ready'): T;
 
             /** 關閉 */
-            (event: 'center/room-unready', listener: MySocket.ListenerHandle): T;
+            (event: 'center/room-unready'): T;
         }
-        interface Socket extends SocketIO.Socket {
-            on: Listener<this>;
-            emit: Emitter;
-            nsp: Namespace;
-        }
-
         interface Namespace extends SocketIO.Namespace {
             on: Listener<this>;
             emit: Emitter;
         }
+    }
+
+    interface Socket extends SocketIO.Socket {
+        on: Socket.Listener<this>;
+        emit: Socket.Emitter;
+        nsp: Socket.Namespace;
     }
 }
 declare namespace ICustomer {
@@ -204,22 +213,22 @@ declare namespace ICustomer {
         interface Listener<T = any> extends MySocket.Listener<T, Socket> {
             (event: 'center/close', listener: void): T;
         }
-        interface Socket extends SocketIO.Socket {
-            on: Listener<this>;
-            emit: Emitter;
-            nsp: Namespace;
-        }
-
         interface Namespace extends SocketIO.Namespace {
             on: Listener<this>;
             emit: Emitter;
         }
     }
 
+    interface Socket extends SocketIO.Socket {
+        on: Socket.Listener<this>;
+        emit: Socket.Emitter;
+        nsp: Socket.Namespace;
+    }
+
     namespace CustomerServiceEvents {
         interface Listener<T = any> {
             (event: string | symbol, listener: (...args: any[]) => void): T;
-            (event: 'connect', listener: (data: { socket: Socket.Socket; token: string }) => void): T;
+            (event: 'connect', listener: (data: { socket: Socket; token: string }) => void): T;
         }
     }
 }
