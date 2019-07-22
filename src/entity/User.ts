@@ -51,6 +51,14 @@ export class User extends BaseEntity {
     public name!: string;
 
     @Column({
+        type: 'varchar',
+        length: 50,
+        nullable: true,
+        default: null,
+    })
+    public image!: string | null;
+
+    @Column({
         type: 'enum',
         enum: UserRole,
     })
@@ -79,6 +87,10 @@ export class User extends BaseEntity {
         type: 'datetime',
     })
     public createdAt!: string;
+
+    get imageUrl() {
+        return this.image ? process.env.USER__IMAGE_URL + this.image : '';
+    }
 
     public checkPassword(password: string) {
         return this.password === password;

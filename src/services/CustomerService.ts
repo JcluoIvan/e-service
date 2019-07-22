@@ -11,12 +11,7 @@ export interface CustomerInformation {
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'connect', listener: (data: { ctoken: CustomerToken }) => void): void;
-}
-
-interface EmitterEvents {
-    (event: string | symbol, ...args: any[]): boolean;
-    (event: 'connect', data: { ctoken: CustomerToken }): boolean;
+    (event: 'connected', listener: (data: { ctoken: CustomerToken }) => void): void;
 }
 
 interface Data {
@@ -27,7 +22,6 @@ interface Data {
 
 export default class CustomerService extends EventEmitter {
     public on!: ListenerEvents<this>;
-    public emit!: EmitterEvents;
 
     private data: Data;
 
@@ -46,15 +40,18 @@ export default class CustomerService extends EventEmitter {
         nsp.on('connect', async (socket: ICustomer.Socket) => {
             const id: string = socket.handshake.query.id || null;
             const name: string = socket.handshake.query.name || '';
+            const token: string = socket.handshake.query.token || '';
 
-            const ctoken = await this.findOrGenerateCustomerToken({ id, name });
+            const ctoken = await this.findOrGenerateCustomerToken({ id, name }, token);
+
             await ctoken.connect(socket);
 
             socket.on('disconnect', () => {
                 ctoken.onDisconnect();
             });
+            this.emit('connected', { ctoken });
 
-            this.emit('connect', { ctoken });
+            socket.emit('token', { token: ctoken.token });
         });
     }
 
@@ -62,10 +59,13 @@ export default class CustomerService extends EventEmitter {
         return this.data.mapCustomers.get(id);
     }
 
-    public async findOrGenerateCustomerToken(cdata: CustomerData) {
-        const find = this.customers.find((c) => c.socket.id === cdata.id);
-        if (find) {
-            return find;
+    public async findOrGenerateCustomerToken(cdata: CustomerData, token: string) {
+        if (token) {
+            const find = this.customers.find((c) => !c.isOnline && c.token === token);
+
+            if (find) {
+                return find;
+            }
         }
 
         const ctoken = new CustomerToken(cdata);
@@ -73,6 +73,7 @@ export default class CustomerService extends EventEmitter {
         ctoken.on('destroy', () => {
             this.data.mapCustomers.delete(ctoken.customer.id);
         });
+
         return ctoken;
     }
 }

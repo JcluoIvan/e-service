@@ -24,7 +24,7 @@ export default class UserToken extends EventEmitter {
         };
     }
 
-    get isOnly() {
+    get isOnline() {
         return this.data.socket && this.data.socket.connected;
     }
 
@@ -50,7 +50,7 @@ export default class UserToken extends EventEmitter {
             throw new LoginFailedError();
         }
 
-        if (this.isOnly) {
+        if (this.isOnline) {
             this.socket.emit('message/error', { message: '重複登入' });
             this.socket.disconnect();
         }
@@ -68,9 +68,7 @@ export default class UserToken extends EventEmitter {
 
         await this.data.user.reload();
 
-        logger.warn('equals > ', this.socket === socket);
-
-        if (this.isOnly) {
+        if (this.isOnline) {
             this.socket.emit('message/error', { message: '重複登入' });
             this.socket.disconnect();
         }

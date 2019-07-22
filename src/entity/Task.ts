@@ -48,7 +48,7 @@ export class Task extends BaseEntity {
     })
     public score!: number;
 
-    @CreateDateColumn({
+    @Column({
         name: 'start_at',
         nullable: true,
         default: null,
@@ -56,13 +56,13 @@ export class Task extends BaseEntity {
     })
     public startAt!: string;
 
-    @CreateDateColumn({
+    @Column({
         name: 'closed_at',
         nullable: true,
         default: null,
         type: 'datetime',
     })
-    public closedAt!: string;
+    public closedAt!: string | null;
 
     @CreateDateColumn({
         name: 'created_at',

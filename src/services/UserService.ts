@@ -15,7 +15,7 @@ import * as moment from 'moment';
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'connect', listener: (data: { utoken: UserToken }) => void): void;
+    (event: 'connected', listener: (data: { utoken: UserToken }) => void): void;
 }
 
 const findByUsername = async (companyId: number, username: string) => {
@@ -74,20 +74,20 @@ export default class UserService extends EventEmitter {
             // );
             try {
                 const token = socket.handshake.query.token || '';
-                logger.warn(token);
                 if (token) {
                     const utoken = await this.reconnect(token, socket);
                     if (utoken) {
                         socket.emit('login', {
                             id: utoken.user.id,
                             username: utoken.user.username,
+                            imageUrl: utoken.user.imageUrl,
                             name: utoken.user.name,
                             role: utoken.user.role,
                             token: utoken.token,
                             loginAt: moment().format('YYYY-MM-DD HH:mm:ss'),
                         });
                         logger.info('send login');
-                        this.emit('connect', { utoken });
+                        this.emit('connected', { utoken });
                     }
                 }
             } catch (err) {
@@ -112,13 +112,14 @@ export default class UserService extends EventEmitter {
                     const resData: IUser.Socket.ListenerData.Login.Response = {
                         id: utoken.user.id,
                         username: utoken.user.username,
+                        imageUrl: utoken.user.imageUrl,
                         role: utoken.user.role,
                         name: utoken.user.name,
                         token: utoken.token || '',
                         loginAt: moment().format('YYYY-MM-DD HH:mm:ss'),
                     };
                     res(responseSuccess(resData));
-                    this.emit('connect', { utoken });
+                    this.emit('connected', { utoken });
                 } catch (err) {
                     logger.error(`Error: ${err.message}`);
                     res(throwError(err));

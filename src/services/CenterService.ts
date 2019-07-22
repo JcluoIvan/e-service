@@ -33,7 +33,7 @@ export default class CenterService extends BaseService {
 
     private setting: { mode: Mode; max: number } = {
         mode: Mode.Loop,
-        max: 2,
+        max: 1,
     };
 
     private loopQueues: ServiceRoom[] = [];
@@ -50,35 +50,42 @@ export default class CenterService extends BaseService {
         super();
 
         /* customer connect */
-        customerService.on('connect', async ({ ctoken: citem }) => this.onCustomerConnected(citem));
+        customerService.on('connected', async ({ ctoken: citem }) => this.onCustomerConnected(citem));
 
         /* 成員登入 */
-        userService.on('connect', ({ utoken }) => this.onUserConnected(utoken));
+        userService.on('connected', ({ utoken }) => this.onUserConnected(utoken));
     }
 
     /**
      * 顧客連線
-     * @param socket socket
+     * ＊ 這裡只處理 socket 的事件綁定 ＊
+     * @param ctoken CustomerToken
      * @param citem 顧客資料
      */
     private async onCustomerConnected(ctoken: CustomerToken) {
         /* 建立 task */
-        const task = await this.createTask(ctoken);
+        const task = await this.findOrCreateTask(ctoken);
 
         /* 顧客主動中斷 (已完成) */
         ctoken.socket.on('center/close', () => {
             task.close();
+            ctoken.destroy();
         });
 
         /** 發送訊息 */
         ctoken.socket.on('center/send', async (data, res) => {
-            const { id, time } = await task.sendMessage(data);
-            res(responseSuccess({ id, time }));
+            const { id, content, time } = await task.sendMessage(data);
+            res(responseSuccess({ id, content, time }));
         });
 
         ctoken.socket.on('disconnect', () => {
-            task.close();
+            task.onDisconnected();
         });
+
+        logger.warn('send start', task.isStart);
+        if (task.isStart) {
+            ctoken.socket.emit('center/start', task.toJsonDetail());
+        }
 
         this.dispatchTask();
     }
@@ -96,6 +103,11 @@ export default class CenterService extends BaseService {
         this.updateTasks(utoken.socket);
         this.updateRooms(utoken.socket);
 
+        sroom.tasks.forEach((t) => {
+            const data: IES.TaskCenter.TaskDetail = t.toJsonDetail();
+            utoken.socket.emit('center/task-detail', data);
+        });
+
         utoken.socket.on('disconnect', () => {
             /** 移除房間 */
             sroom.disconnect();
@@ -107,8 +119,8 @@ export default class CenterService extends BaseService {
                 res(throwError(new TaskNotFoundError()));
                 return;
             }
-            const { id, time } = await task.sendMessage(data, utoken.user.id);
-            res(responseSuccess({ id, time }));
+            const { id, content, time } = await task.sendMessage(data, utoken.user.id);
+            res(responseSuccess({ id, content, time }));
         });
 
         utoken.socket.on('center/room-ready', (res) => sroom.turnOnReady());
@@ -147,7 +159,7 @@ export default class CenterService extends BaseService {
     private dispatchTask() {
         const setting = this.setting;
         let room: ServiceRoom | null = null;
-
+        logger.error(this.taskQueues.length, this.loopQueues.length);
         if (this.taskQueues.length === 0 || this.loopQueues.length === 0) {
             return;
         }
@@ -161,11 +173,12 @@ export default class CenterService extends BaseService {
                 this.loopQueues = [...this.loopQueues, ...pass];
             }
         }
+        if (!room) {
+            return;
+        }
         const task = this.taskQueues.shift();
-        logger.info(room, task);
-        if (room && task) {
+        if (task) {
             room.addTask(task);
-            logger.info('despatch');
         }
     }
 
@@ -181,14 +194,62 @@ export default class CenterService extends BaseService {
         io.emit('center/rooms', this.rooms.map((r) => r.toJson()));
     }
 
-    private async createTask(ctoken: CustomerToken) {
+    private async findOrCreateTask(ctoken: CustomerToken) {
+        const find = this.tasks.find((t) => t.customer.token === ctoken.token);
+        if (find) {
+            find.onReconnected();
+            return find;
+        }
+
         const task = await ServiceTask.createTask(ctoken);
         this.taskQueues.push(task);
         this.mapTasks.set(task.id, task);
 
-        task.on('close', () => {
+        task.on('message', ({ message }) => {
+            task.customer.socket.emit('center/message', message);
+
+            task.allUsers.forEach((u) => {
+                u.socket.emit('center/message', message);
+            });
+        });
+
+        task.on('start', () => {
+            logger.warn('send start 2');
+
+            ctoken.socket.emit('center/start', task.toJsonDetail());
+        });
+
+        task.on('closed', ({ closedAt }) => {
             this.mapTasks.delete(task.id);
+            // this.taskQueues = this.taskQueues.filter((t) => t !== task);
+            this.mapTasks.delete(task.id);
+            this.userService.nsp.emit('center/task-closed', { taskId: task.id, closedAt });
+            this.dispatchTask();
+        });
+
+        /* 會員斷線 (task 未 closed 的情況下斷線才會發出此通知) */
+        task.on('disconnected', ({ disconnectedAt }) => {
             this.taskQueues = this.taskQueues.filter((t) => t !== task);
+            const room = (task.executive && this.mapRooms.get(task.executive.user.id)) || null;
+            if (room) {
+                room.removeTask(task);
+            }
+            task.clearUsers();
+            this.userService.nsp.emit('center/task-disconnected', { taskId: task.id, disconnectedAt });
+        });
+
+        task.on('closed', () => {
+            const room = (task.executive && this.mapRooms.get(task.executive.user.id)) || null;
+            if (room) {
+                room.removeTask(task);
+                this.updateTask(task);
+            }
+        });
+
+        task.on('reconnected', () => {
+            this.taskQueues.push(task);
+            logger.error('add task > ', this.taskQueues.length);
+            this.userService.nsp.emit('center/task-reconnected', { taskId: task.id });
             this.dispatchTask();
         });
 
@@ -221,8 +282,17 @@ export default class CenterService extends BaseService {
             utoken.socket.nsp.emit('center/room-unready', { userId: room.id });
         });
 
-        room.on('add-task', (task) => {
-            utoken.socket.nsp.emit('center/despatch-task', { taskId: task.id, userId: room.id });
+        room.on('add-task', ({ task }) => {
+            logger.error('add-task');
+            const data: IUser.Socket.EmitterData.Center.DespatchTask = {
+                taskId: task.id,
+                executive: {
+                    id: utoken.user.id,
+                    name: utoken.user.name,
+                    imageUrl: utoken.user.imageUrl,
+                },
+            };
+            utoken.socket.nsp.emit('center/despatch-task', data);
         });
 
         room.on('connect', () => {

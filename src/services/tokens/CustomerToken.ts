@@ -1,5 +1,4 @@
 import { SocketUndefinedError } from '../../exceptions/token.error';
-import { runInThisContext } from 'vm';
 import * as md5 from 'md5';
 import { clearTimeout, setTimeout } from 'timers';
 import { EventEmitter } from 'events';
@@ -11,12 +10,13 @@ export interface CustomerData {
 
 interface Data {
     customer: CustomerData;
+    token: string;
     socket: ICustomer.Socket | null;
 }
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'destroy', listener: () => void): T;
+    (event: 'disconnected' | 'distory' | 'reconnected', listener: () => void): T;
 }
 
 const generateToken = (name: string) => {
@@ -26,7 +26,7 @@ const generateToken = (name: string) => {
 };
 
 /** 斷線後，資料保留時間 */
-const DESTROY_DELAY = 5 * 60 * 1000;
+const DESTROY_DELAY = 2 * 60 * 1000;
 
 export default class CustomerToken extends EventEmitter {
     public on!: ListenerEvents<this>;
@@ -45,35 +45,51 @@ export default class CustomerToken extends EventEmitter {
         return this.data.socket;
     }
 
-    get isOnly() {
+    get token() {
+        return this.data.token;
+    }
+
+    get isOnline() {
         return this.data.socket && this.data.socket.connected;
     }
 
     constructor(customer: CustomerData) {
         super();
-        const id = customer.id || generateToken(customer.name);
-
         this.data = {
-            customer: { ...customer, id },
+            customer: { ...customer },
+            token: generateToken(customer.name),
             socket: null,
         };
     }
 
     public async connect(socket: ICustomer.Socket) {
-        if (this.isOnly) {
+        if (this.isOnline) {
             this.socket.emit('message/error', { message: '重複登入' });
             this.socket.disconnect();
+        }
+
+        /** 若 destroy 代表已斷, 等待重連 */
+        if (this.destroyTimes) {
+            this.emit('reconnected');
+            this.clearDestroyTimer();
         }
         this.data.socket = socket;
     }
 
+    public destroy() {
+        this.emit('destroy');
+        this.destroyTimes = null;
+        this.removeAllListeners();
+    }
+
     public onDisconnect() {
-        if (this.isOnly) {
+        if (this.isOnline) {
             this.socket.disconnect();
         }
         this.clearDestroyTimer();
+        this.emit('disconnected');
         this.destroyTimes = setTimeout(() => {
-            this.emit('destroy');
+            this.destroy();
         }, DESTROY_DELAY);
     }
 

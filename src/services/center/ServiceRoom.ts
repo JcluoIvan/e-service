@@ -5,15 +5,12 @@ import { RoomDisconnectError } from '../../exceptions/center.error';
 import { User } from '../../entity/User';
 import UserToken from '../tokens/UserToken';
 
-interface EmitterEvents {
-    (event: string | symbol, ...args: any[]): boolean;
-    (event: 'ready' | 'unready' | 'connect' | 'disconnect'): boolean;
-    (event: 'add-task', data: ServiceTask): boolean;
-}
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'ready' | 'unready' | 'connect' | 'disconnect', listener: () => void): T;
-    (event: 'add-task', listener: (task: ServiceTask) => void): T;
+    (event: 'ready' | 'unready' | 'connect' | 'disconnect' | 'reconnect', listener: () => void): T;
+    (event: 'add-task', listener: (data: { task: ServiceTask }) => void): T;
+    // tslint:disable-next-line:unified-signatures
+    (event: 'remove-task', listener: (data: { task: ServiceTask }) => void): T;
 }
 
 interface Data {
@@ -23,7 +20,6 @@ interface Data {
 
 export default class ServiceRoom extends EventEmitter {
     public on!: ListenerEvents<this>;
-    public emit!: EmitterEvents;
 
     private data: Data;
 
@@ -31,7 +27,7 @@ export default class ServiceRoom extends EventEmitter {
     private ready = false;
 
     get isOnly() {
-        return this.data.utoken.isOnly;
+        return this.data.utoken.isOnline;
     }
 
     get tasks() {
@@ -66,14 +62,12 @@ export default class ServiceRoom extends EventEmitter {
 
     public addTask(task: ServiceTask) {
         this.data.tasks.push(task);
-
-        task.on('close', () => {
-            this.data.tasks = this.data.tasks.filter((t) => t !== task);
-        });
-
         task.start(this.data.utoken);
+        this.emit('add-task', {task});
+    }
 
-        this.emit('add-task', task);
+    public removeTask(task: ServiceTask) {
+        this.data.tasks = this.data.tasks.filter((t) => t !== task);
     }
 
     public connect(utoken: UserToken) {

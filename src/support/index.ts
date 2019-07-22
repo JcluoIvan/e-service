@@ -3,7 +3,7 @@ import { BaseError } from '../exceptions';
 
 export const socketEventMiddleware = <T extends SocketIO.Socket>(
     socket: SocketIO.Socket,
-    middlewareCallback: (response: MySocket.Response.Handle, next: () => any) => void,
+    middlewareCallback: (response: ISK.Response.Handle, next: () => any) => void,
 ): T => {
     // const SocketON = socket.on.bind(socket);
 
@@ -27,14 +27,14 @@ export const socketEventMiddleware = <T extends SocketIO.Socket>(
     return socket as any;
 };
 
-export const throwError = (err: BaseError): MySocket.Response.Data => {
+export const throwError = (err: BaseError): ISK.Response.Data => {
     return {
         code: err.code,
         message: err.message,
     };
 };
 
-export const responseSuccess = <T = any>(data: T, message?: string): MySocket.Response.Data<T> => {
+export const responseSuccess = <T = any>(data: T, message?: string): ISK.Response.Data<T> => {
     return {
         code: 0,
         data,
