@@ -12,7 +12,7 @@ import { clearTimeout, setTimeout } from 'timers';
 import logger from '../../logger';
 import { User } from '../../entity/User';
 
-type CacheMessage = ISK.EmitterData.Message;
+type CacheMessage = IES.TaskCenter.Message;
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
@@ -29,7 +29,7 @@ interface Data {
     executive: UserToken | null;
     customer: CustomerToken;
     watchers: UserToken[];
-    disconnectedAt: string | null;
+    disconnectedAt: number;
 }
 
 const toUserInfo = (user: User | null): IES.UserInfo => {
@@ -120,7 +120,7 @@ export default class ServiceTask extends EventEmitter {
             customer,
             executive: null,
             watchers: [],
-            disconnectedAt: null,
+            disconnectedAt: 0,
         };
     }
 
@@ -134,13 +134,22 @@ export default class ServiceTask extends EventEmitter {
      */
     public async start(executive: UserToken) {
         const startAt = moment();
+        const info = toUserInfo(executive.user);
         this.task.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
         this.task.executiveId = executive.user.id;
         this.task.closedAt = null;
 
         this.task = await this.task.save();
-        this.emit('start');
         this.data.executive = executive;
+        this.customer.socket.emit('center/start', {
+            executive: info,
+            messages: this.data.messages,
+            startAt: moment().valueOf(),
+        });
+        executive.socket.nsp.emit('center/task-despatch', {
+            taskId: this.id,
+            executive: info,
+        });
     }
 
     public async sendMessage(data: ISK.ListenerData.Message.Request, userId?: number) {
@@ -177,7 +186,7 @@ export default class ServiceTask extends EventEmitter {
             id: message.id,
             content: message.getContent(),
             taskId: message.taskId,
-            time: message.createdAt,
+            time: time.valueOf(),
             type: message.type,
             user: {
                 id: user ? user.user.id : 0,
@@ -187,7 +196,11 @@ export default class ServiceTask extends EventEmitter {
         };
 
         this.data.messages = [cacheMessage, ...this.data.messages].slice(0, this.limitMessage);
-        this.emit('message', { message: cacheMessage });
+
+        this.customer.socket.emit('center/message', cacheMessage);
+        this.allUsers.forEach((u) => {
+            u.socket.emit('center/message', cacheMessage);
+        });
         return cacheMessage;
     }
 
@@ -195,27 +208,26 @@ export default class ServiceTask extends EventEmitter {
         this.data.watchers.push(utoken);
         const data: ISK.EmitterData.CenterJoin = {
             taskId: this.id,
-            user: {
-                id: utoken.user.id,
-                name: utoken.user.name,
-                imageUrl: utoken.user.imageUrl,
-            },
+            user: toUserInfo(utoken.user),
         };
-        this.customer.socket.emit('center/join', data);
-        this.allUsers.forEach((u) => {
-            u.socket.emit('center/join', data);
-        });
+        utoken.socket.emit('center/join');
+        // this.customer.socket.emit('center/join', data);
+        // this.allUsers.forEach((u) => {
+        //     u.socket.emit('center/join', data);
+        // });
     }
 
-    public leaveWatcher(userId: number) {
+    public leaveWatcher(utoken: UserToken) {
         const data: ISK.EmitterData.CenterLeave = {
             taskId: this.id,
-            userId,
+            userId: utoken.user.id,
         };
-        this.customer.socket.emit('center/leave', data);
-        this.allUsers.forEach((u) => {
-            u.socket.emit('center/leave', data);
-        });
+        utoken.socket.emit('center/leave', data);
+
+        // this.customer.socket.emit('center/leave', data);
+        // this.allUsers.forEach((u) => {
+        //     u.socket.emit('center/leave', data);
+        // });
     }
     public clearUsers() {
         this.data.executive = null;
@@ -237,11 +249,12 @@ export default class ServiceTask extends EventEmitter {
         return {
             id: this.id,
             name: this.name,
+            online: this.customer.isOnline,
             executive: toUserInfo(user),
-            startAt: this.task.startAt,
-            createdAt: this.task.createdAt,
+            startAt: this.task.intStartAt,
+            createdAt: this.task.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
-            closedAt: this.task.closedAt,
+            closedAt: this.task.intClosedAt,
         };
     }
 
@@ -250,18 +263,19 @@ export default class ServiceTask extends EventEmitter {
         return {
             id: this.id,
             name: this.name,
+            online: this.customer.isOnline,
             executive: toUserInfo(user),
-            startAt: this.task.startAt,
-            createdAt: this.task.createdAt,
+            startAt: this.task.intStartAt,
+            createdAt: this.task.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
-            closedAt: this.task.closedAt,
+            closedAt: this.task.intClosedAt,
             watchers: this.data.watchers.map((w) => toUserInfo(w.user)),
             messages: this.data.messages,
         };
     }
 
     public onReconnected() {
-        this.data.disconnectedAt = null;
+        this.data.disconnectedAt = 0;
         this.emit('reconnected');
     }
 
@@ -269,7 +283,9 @@ export default class ServiceTask extends EventEmitter {
      * 顧客斷線
      */
     public onDisconnected() {
-        this.data.disconnectedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+        const disconnectedAt = moment().valueOf();
+        this.data.disconnectedAt = disconnectedAt;
+        this.data.executive = null;
 
         /** 已完成的 task 不再發出 disconnected */
         if (!this.isClosed) {

@@ -67,11 +67,12 @@ export default class CustomerService extends EventEmitter {
                 return find;
             }
         }
+        logger.warn(token, this.customers.map((o) => o.token));
 
         const ctoken = new CustomerToken(cdata);
-        this.data.mapCustomers.set(ctoken.customer.id, ctoken);
+        this.data.mapCustomers.set(ctoken.token, ctoken);
         ctoken.on('destroy', () => {
-            this.data.mapCustomers.delete(ctoken.customer.id);
+            this.data.mapCustomers.delete(ctoken.token);
         });
 
         return ctoken;

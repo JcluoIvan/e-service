@@ -15,7 +15,7 @@ interface ListenerEvents<T> {
 
 interface Data {
     utoken: UserToken;
-    tasks: ServiceTask[];
+    ready: boolean;
 }
 
 export default class ServiceRoom extends EventEmitter {
@@ -24,14 +24,9 @@ export default class ServiceRoom extends EventEmitter {
     private data: Data;
 
     /** 是否開啟 (開啟狀態才能經由系統自動分配顧客) */
-    private ready = false;
 
-    get isOnly() {
+    get isOnline() {
         return this.data.utoken.isOnline;
-    }
-
-    get tasks() {
-        return this.data.tasks;
     }
 
     get id() {
@@ -42,44 +37,34 @@ export default class ServiceRoom extends EventEmitter {
         return this.data.utoken.user.name;
     }
 
+    get isReady() {
+        return this.data.ready;
+    }
+
+    get utoken() {
+        return this.data.utoken;
+    }
+
+    get nsp() {
+        return this.utoken.socket.nsp;
+    }
+
     constructor(utoken: UserToken) {
         super();
         this.data = {
             utoken,
-            tasks: [],
+            ready: false,
         };
     }
 
-    public turnOnReady() {
-        this.ready = true;
-        this.emit('ready');
+    public ready() {
+        this.data.ready = true;
+        this.nsp.emit('center/room-ready', { userId: this.id });
     }
 
-    public turnOffReady() {
-        this.ready = false;
-        this.emit('unready');
-    }
-
-    public addTask(task: ServiceTask) {
-        this.data.tasks.push(task);
-        task.start(this.data.utoken);
-        this.emit('add-task', {task});
-    }
-
-    public removeTask(task: ServiceTask) {
-        this.data.tasks = this.data.tasks.filter((t) => t !== task);
-    }
-
-    public connect(utoken: UserToken) {
-        // this.data.socket = utoken.socket;
-        // this.data.name = utoken.user.name;
-        this.emit('connect');
-    }
-
-    /** 專員離線, 關閉房間 */
-    public disconnect() {
-        this.turnOffReady();
-        this.emit('disconnect');
+    public unready() {
+        this.data.ready = false;
+        this.nsp.emit('center/room-unready', { userId: this.id });
     }
 
     public toJson(): IUser.Socket.EmitterData.Center.Room {
@@ -87,7 +72,8 @@ export default class ServiceRoom extends EventEmitter {
         return {
             id: this.id,
             name: this.name,
-            ready: this.ready,
+            online: this.isOnline,
+            ready: this.isReady,
         };
     }
 }

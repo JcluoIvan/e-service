@@ -25,7 +25,7 @@ export default class UserToken extends EventEmitter {
     }
 
     get isOnline() {
-        return this.data.socket && this.data.socket.connected;
+        return this.data.socket && this.data.socket.connected || false;
     }
 
     get socket() {

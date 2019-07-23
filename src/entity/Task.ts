@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } from 'typeorm';
+import * as moment from 'moment';
 
 /**
  * 任務 (顧客加入系統後開始)
@@ -71,4 +72,14 @@ export class Task extends BaseEntity {
         type: 'datetime',
     })
     public createdAt!: string;
+
+    get intStartAt() {
+        return this.startAt ? moment(this.startAt).valueOf() : 0;
+    }
+    get intCreatedAt() {
+        return this.createdAt ? moment(this.createdAt).valueOf() : 0;
+    }
+    get intClosedAt() {
+        return this.closedAt ? moment(this.closedAt).valueOf() : 0;
+    }
 }
