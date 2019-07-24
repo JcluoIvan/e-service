@@ -14,16 +14,6 @@ import { User } from '../../entity/User';
 
 type CacheMessage = IES.TaskCenter.Message;
 
-interface ListenerEvents<T> {
-    (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'disconnected', listener: (data: { disconnectedAt: string }) => void): T;
-    (event: 'reconnected', listener: () => void): T;
-    (event: 'closed', listener: (data: { closedAt: string }) => void): T;
-    (event: 'message', listener: (data: { message: CacheMessage }) => void): T;
-    // tslint:disable-next-line:unified-signatures
-    (event: 'start', listener: () => void): T;
-}
-
 interface Data {
     messages: CacheMessage[];
     executive: UserToken | null;
@@ -32,29 +22,31 @@ interface Data {
     disconnectedAt: number;
 }
 
-const toUserInfo = (user: User | null): IES.UserInfo => {
-    return user
+const toUserInfo = (utoken: UserToken | null): IUser.Socket.EmitterData.UserInfo => {
+    return utoken
         ? {
-              id: user.id,
-              name: user.name,
-              imageUrl: user.imageUrl,
+              id: utoken.user.id,
+              name: utoken.user.name,
+              imageUrl: utoken.user.imageUrl,
+              online: utoken.isOnline,
           }
         : {
               id: 0,
               name: '',
               imageUrl: '',
+              online: false,
           };
 };
 
 /**
  * 服務任務
  */
-export default class ServiceTask extends EventEmitter {
+export default class ServiceTask {
     /**
      * 建立任務
-     * @param ctoken 顧客連線資訊
+     * @param ctoken Guest 連線資訊
      */
-    public static async createTask(ctoken: CustomerToken) {
+    public static async createTask(ctoken: CustomerToken, nsp: IUser.Socket.Namespace) {
         const createdAt = moment();
         const taskEntity = new Task();
         taskEntity.executiveId = 0;
@@ -64,10 +56,8 @@ export default class ServiceTask extends EventEmitter {
 
         const task = await taskEntity.save();
 
-        return new ServiceTask(ctoken, task);
+        return new ServiceTask(ctoken, task, nsp);
     }
-
-    public on!: ListenerEvents<this>;
 
     /** 只保留 message 的 n 筆快取 */
     private readonly limitMessage = 10;
@@ -111,8 +101,11 @@ export default class ServiceTask extends EventEmitter {
         return this.customer.isOnline;
     }
 
-    constructor(customer: CustomerToken, private task: Task) {
-        super();
+    get watchers() {
+        return this.data.watchers;
+    }
+
+    constructor(customer: CustomerToken, private task: Task, private nsp: IUser.Socket.Namespace) {
         this.data = {
             /** 對話記錄 */
             messages: [],
@@ -134,7 +127,7 @@ export default class ServiceTask extends EventEmitter {
      */
     public async start(executive: UserToken) {
         const startAt = moment();
-        const info = toUserInfo(executive.user);
+        const info = toUserInfo(executive);
         this.task.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
         this.task.executiveId = executive.user.id;
         this.task.closedAt = null;
@@ -146,7 +139,7 @@ export default class ServiceTask extends EventEmitter {
             messages: this.data.messages,
             startAt: moment().valueOf(),
         });
-        executive.socket.nsp.emit('center/task-despatch', {
+        executive.socket.nsp.emit('center/task-start', {
             taskId: this.id,
             executive: info,
         });
@@ -206,11 +199,11 @@ export default class ServiceTask extends EventEmitter {
 
     public joinWatcher(utoken: UserToken) {
         this.data.watchers.push(utoken);
-        const data: ISK.EmitterData.CenterJoin = {
-            taskId: this.id,
-            user: toUserInfo(utoken.user),
-        };
-        utoken.socket.emit('center/join');
+        // const data: ISK.EmitterData.CenterJoin = {
+        //     taskId: this.id,
+        //     user: toUserInfo(utoken),
+        // };
+        // utoken.socket.emit('center/join', data);
         // this.customer.socket.emit('center/join', data);
         // this.allUsers.forEach((u) => {
         //     u.socket.emit('center/join', data);
@@ -218,11 +211,12 @@ export default class ServiceTask extends EventEmitter {
     }
 
     public leaveWatcher(utoken: UserToken) {
-        const data: ISK.EmitterData.CenterLeave = {
-            taskId: this.id,
-            userId: utoken.user.id,
-        };
-        utoken.socket.emit('center/leave', data);
+        this.data.watchers = this.data.watchers.filter((w) => w.user.id !== utoken.user.id);
+        // const data: ISK.EmitterData.CenterLeave = {
+        //     taskId: this.id,
+        //     userId: utoken.user.id,
+        // };
+        // utoken.socket.emit('center/leave', data);
 
         // this.customer.socket.emit('center/leave', data);
         // this.allUsers.forEach((u) => {
@@ -244,13 +238,12 @@ export default class ServiceTask extends EventEmitter {
         });
     }
 
-    public toJson(detail = false): IES.TaskCenter.Task {
-        const { user = null } = this.executive || {};
+    public toJson(): IES.TaskCenter.Task {
         return {
             id: this.id,
             name: this.name,
             online: this.customer.isOnline,
-            executive: toUserInfo(user),
+            executive: toUserInfo(this.executive),
             startAt: this.task.intStartAt,
             createdAt: this.task.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
@@ -258,45 +251,51 @@ export default class ServiceTask extends EventEmitter {
         };
     }
 
-    public toJsonDetail(): IES.TaskCenter.TaskDetail {
-        const { user = null } = this.executive || {};
+    public toJsonDetail(utoken?: UserToken): IES.TaskCenter.TaskDetail {
+        const watchers = (utoken && this.data.watchers.filter((w) => w.user.id === utoken.user.id)) || [];
         return {
             id: this.id,
             name: this.name,
             online: this.customer.isOnline,
-            executive: toUserInfo(user),
+            executive: toUserInfo(this.executive),
             startAt: this.task.intStartAt,
             createdAt: this.task.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
             closedAt: this.task.intClosedAt,
-            watchers: this.data.watchers.map((w) => toUserInfo(w.user)),
+            watchers: watchers.map(toUserInfo),
             messages: this.data.messages,
         };
     }
 
     public onReconnected() {
         this.data.disconnectedAt = 0;
-        this.emit('reconnected');
+        this.nsp.emit('center/task-online', { taskId: this.id });
     }
 
     /**
-     * 顧客斷線
+     * Guest 斷線
      */
     public onDisconnected() {
         const disconnectedAt = moment().valueOf();
         this.data.disconnectedAt = disconnectedAt;
-        this.data.executive = null;
-
-        /** 已完成的 task 不再發出 disconnected */
-        if (!this.isClosed) {
-            logger.error('emit disconnected');
-            this.emit('disconnected', { disconnected: this.data.disconnectedAt });
-        }
+        this.nsp.emit('center/task-offline', { taskId: this.id, disconnectedAt });
     }
 
     public async close() {
-        this.task.closedAt = moment().format('YYYY-MM-DD HH:mm:ss');
-        this.task = await this.task.save();
-        this.emit('closed');
+        if (this.task.startAt) {
+            const closedAt = moment();
+            this.task.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
+            this.task = await this.task.save();
+            this.nsp.emit('center/task-closed', { taskId: this.id, closedAt: closedAt.valueOf() });
+        } else {
+            /** 移除未開啟服務的 task */
+            await this.task.remove();
+            this.nsp.emit('center/task-discard', { taskId: this.id });
+        }
+    }
+
+    public updateExecutive() {
+        logger.info('update executive');
+        this.nsp.emit('center/task-executive', { taskId: this.id, executive: toUserInfo(this.executive) });
     }
 }

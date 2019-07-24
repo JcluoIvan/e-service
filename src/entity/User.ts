@@ -92,6 +92,10 @@ export class User extends BaseEntity {
         return this.image ? process.env.USER__IMAGE_URL + this.image : '';
     }
 
+    get isSupervisor () {
+        return this.role === UserRole.Supervisor;
+    }
+
     public checkPassword(password: string) {
         return this.password === password;
     }

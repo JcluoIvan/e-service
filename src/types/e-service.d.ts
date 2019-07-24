@@ -112,12 +112,20 @@ declare namespace ISK {
 declare namespace IUser {
     namespace Socket {
         namespace EmitterData {
+            interface UserInfo extends IES.UserInfo {
+                online: boolean;
+            }
+
             namespace Center {
                 interface Room {
                     id: number;
                     name: string;
                     ready: boolean;
                     online: boolean;
+                }
+
+                interface Task extends IES.TaskCenter.Task {
+                    executive: UserInfo;
                 }
             }
 
@@ -156,29 +164,38 @@ declare namespace IUser {
 
             (event: 'message/error', data: { message: string }): boolean;
 
-            (event: 'center/tasks', data: IES.TaskCenter.Task[]): boolean;
+            (event: 'center/tasks', data: EmitterData.Center.Task[]): boolean;
 
-            (event: 'center/task', data: IES.TaskCenter.Task): boolean;
+            (event: 'center/task', data: EmitterData.Center.Task): boolean;
 
             (event: 'center/task-lock', data: { taskId: number }): boolean;
 
             (event: 'center/task-unlock', data: { taskId: number }): boolean;
 
-            /** 顧客斷線(未完成) */
-            (event: 'center/task-disconnected', data: { taskId: number }): boolean;
+            /** guest 離線 / 斷線 */
+            (event: 'center/task-offline', data: { taskId: number; disconnectedAt: number }): boolean;
 
-            /** 顧客重新連線 */
-            (event: 'center/task-reconnected', data: { taskId: number }): boolean;
+            /** guest 上線 / 重新連線 */
+            (event: 'center/task-online', data: { taskId: number }): boolean;
+
+            /** 服務人員更新 / 斷線 / 上線 等... */
+            (event: 'center/task-executive', data: { taskId: number; executive: EmitterData.UserInfo }): boolean;
 
             /** task 完成 */
-            (event: 'center/task-closed', data: { taskId: number }): boolean;
+            (event: 'center/task-closed', data: { taskId: number; clostedAt: number }): boolean;
 
             /** 更新任務列表 */
             (event: 'center/task-queue', data: IES.TaskCenter.Task[]): boolean;
 
+            /** 捨棄 task (未開始 & 顧客離線且 session 過期) */
+            (event: 'center/task-discard', data: { taskId: number }): boolean;
+
+            /** 更新 watch tasks */
+            (event: 'center/task-watchers', data: number[]): boolean;
+
             /** 任務分派 */
             (
-                event: 'center/task-despatch',
+                event: 'center/task-start',
                 data: {
                     taskId: number;
                     executive: IES.UserInfo;
@@ -196,7 +213,9 @@ declare namespace IUser {
 
             /** 某專員轉為 unready */
             (event: 'center/room-unready', data: { userId: number }): boolean;
+        }
 
+        interface Emitter extends ISK.Emitter {
             (event: 'support/articles', articles: EmitterData.Support.Article[]): boolean;
         }
 
@@ -208,11 +227,14 @@ declare namespace IUser {
             (event: 'center/task-lock', listener: ISK.ListenerHandle<number>): T;
             (event: 'center/task-unlock', listener: ISK.ListenerHandle<number>): T;
 
+            /** 開始服務顧客 */
+            (event: 'center/task-start', listener: ISK.ListenerHandle<{ taskId: number }>): T;
+
             /** 主管加入 task */
-            (event: 'center/join', listener: ISK.ListenerHandle<number>): T;
+            (event: 'center/task-join', listener: ISK.ListenerHandle<{taskId: number}>): T;
 
             /** 主管離開 task */
-            (event: 'center/leave', listener: ISK.ListenerHandle<number>): T;
+            (event: 'center/task-leave', listener: ISK.ListenerHandle<{taskId: number}>): T;
 
             /** 查詢所有房間 */
             (event: 'center/rooms', listener: ISK.ListenerHandle): T;
@@ -222,9 +244,6 @@ declare namespace IUser {
 
             /** 關閉 */
             (event: 'center/room-unready'): T;
-
-            /** 開始服務顧客 */
-            (event: 'center/task-start', listener: ISK.ListenerHandle<{ taskId: number }>): T;
         }
 
         interface Namespace extends SocketIO.Namespace {

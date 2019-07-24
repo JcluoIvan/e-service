@@ -16,7 +16,7 @@ interface Data {
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'disconnected' | 'distory' | 'reconnected', listener: () => void): T;
+    (event: 'disconnected' | 'destroy' | 'reconnected', listener: () => void): T;
 }
 
 const generateToken = (name: string) => {
@@ -25,8 +25,8 @@ const generateToken = (name: string) => {
     return md5(`${now}-${rand}-${name}`);
 };
 
-/** 斷線後，資料保留時間 */
-const DESTROY_DELAY = 2 * 60 * 1000;
+/** 斷線後，session 保留時間 */
+const DESTROY_DELAY = 1 * 60 * 1000;
 
 export default class CustomerToken extends EventEmitter {
     public on!: ListenerEvents<this>;
