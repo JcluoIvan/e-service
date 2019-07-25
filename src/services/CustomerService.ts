@@ -11,7 +11,7 @@ export interface CustomerInformation {
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'connected', listener: (data: { ctoken: CustomerToken }) => void): void;
+    (event: 'connect', listener: (data: { ctoken: CustomerToken }) => void): void;
 }
 
 interface Data {
@@ -49,7 +49,7 @@ export default class CustomerService extends EventEmitter {
             socket.on('disconnect', () => {
                 ctoken.onDisconnect();
             });
-            this.emit('connected', { ctoken });
+            this.emit('connect', { ctoken });
 
             socket.emit('token', { token: ctoken.token });
         });

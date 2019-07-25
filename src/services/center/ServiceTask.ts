@@ -115,6 +115,7 @@ export default class ServiceTask {
             watchers: [],
             disconnectedAt: 0,
         };
+        customer.socket.emit('center/waiting');
     }
 
     public hasUser(userId: number) {
@@ -266,9 +267,23 @@ export default class ServiceTask {
             messages: this.data.messages,
         };
     }
+    public toJsonForCustomer(): IES.TaskCenter.TaskForCustomer {
+        return {
+            id: this.id,
+            name: this.name,
+            online: this.customer.isOnline,
+            executive: toUserInfo(this.executive),
+            startAt: this.task.intStartAt,
+            createdAt: this.task.intCreatedAt,
+            messages: this.data.messages,
+        };
+    }
 
     public onReconnected() {
         this.data.disconnectedAt = 0;
+
+        this.customer.socket.emit('center/task', this.toJsonForCustomer());
+
         this.nsp.emit('center/task-online', { taskId: this.id });
     }
 
@@ -286,11 +301,13 @@ export default class ServiceTask {
             const closedAt = moment();
             this.task.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
             this.task = await this.task.save();
+            this.data.executive = null;
             this.nsp.emit('center/task-closed', { taskId: this.id, closedAt: closedAt.valueOf() });
         } else {
+            const taskId = this.id;
             /** 移除未開啟服務的 task */
             await this.task.remove();
-            this.nsp.emit('center/task-discard', { taskId: this.id });
+            this.nsp.emit('center/task-discard', { taskId });
         }
     }
 

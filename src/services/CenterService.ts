@@ -51,10 +51,10 @@ export default class CenterService extends BaseService {
         super();
 
         /* customer connect */
-        customerService.on('connected', async ({ ctoken: citem }) => this.onCustomerConnected(citem));
+        customerService.on('connect', async ({ ctoken: citem }) => this.onCustomerConnected(citem));
 
         /* 成員登入 */
-        userService.on('connected', ({ utoken }) => this.onUserConnected(utoken));
+        userService.on('connect', ({ utoken }) => this.onUserConnected(utoken));
     }
 
     private getTask(taskId: number) {
@@ -77,6 +77,7 @@ export default class CenterService extends BaseService {
 
         /* 顧客主動中斷 (已完成) */
         ctoken.socket.on('center/close', () => {
+            const executive = task.executive;
             task.close();
             ctoken.destroy();
         });
@@ -94,6 +95,7 @@ export default class CenterService extends BaseService {
         if (!this.mapCustomer.has(ctoken.token)) {
             this.mapCustomer.add(ctoken.token);
             ctoken.on('destroy', () => {
+                const executive = task.executive;
                 task.close();
                 this.mapCustomer.delete(ctoken.token);
             });
@@ -155,29 +157,28 @@ export default class CenterService extends BaseService {
                 });
         });
 
-        /** 僅主管才能使用的功能 */
-        if (utoken.user.isSupervisor) {
-            utoken.socket.on('center/task-join', ({ taskId }) => {
-                try {
-                    const task = this.getTask(taskId);
+        utoken.socket.on('center/task-join', ({ taskId }) => {
+            try {
+                const task = this.getTask(taskId);
+                if (utoken.user.isSupervisor || task.isClosed) {
                     task.joinWatcher(utoken);
                     utoken.socket.emit('center/task-detail', task.toJsonDetail(utoken));
                     this.updateWatchers(utoken);
-                } catch (err) {
-                    utoken.socket.emit('message/error', { message: err.message });
                 }
-            });
+            } catch (err) {
+                utoken.socket.emit('message/error', { message: err.message });
+            }
+        });
 
-            utoken.socket.on('center/task-leave', ({ taskId }) => {
-                try {
-                    const task = this.getTask(taskId);
-                    task.leaveWatcher(utoken);
-                    this.updateWatchers(utoken);
-                } catch (err) {
-                    utoken.socket.emit('message/error', { message: err.message });
-                }
-            });
-        }
+        utoken.socket.on('center/task-leave', ({ taskId }) => {
+            try {
+                const task = this.getTask(taskId);
+                task.leaveWatcher(utoken);
+                this.updateWatchers(utoken);
+            } catch (err) {
+                utoken.socket.emit('message/error', { message: err.message });
+            }
+        });
     }
     private async findOrCreateTask(ctoken: CustomerToken) {
         const find = this.tasks.find((t) => t.customer.token === ctoken.token);

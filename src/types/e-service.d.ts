@@ -30,6 +30,16 @@ declare namespace IES {
             watchers: UserInfo[];
             messages: IES.TaskCenter.Message[];
         }
+        interface TaskForCustomer {
+            id: number;
+            name: string;
+            online: boolean;
+            executive: UserInfo;
+            startAt: number;
+            createdAt: number;
+            messages: IES.TaskCenter.Message[];
+        }
+
         interface Message {
             id: number;
             taskId: number;
@@ -155,6 +165,16 @@ declare namespace IUser {
                     loginAt: string;
                 }
             }
+
+            namespace Article {
+
+                interface Save {
+                    id: number;
+                    key: string;
+                    content: string;
+                    share: boolean;
+                }
+            }
         }
 
         interface Emitter extends ISK.Emitter {
@@ -215,8 +235,11 @@ declare namespace IUser {
             (event: 'center/room-unready', data: { userId: number }): boolean;
         }
 
+        /** articles emitters */
         interface Emitter extends ISK.Emitter {
-            (event: 'support/articles', articles: EmitterData.Support.Article[]): boolean;
+            (event: 'article/all', articles: EmitterData.Support.Article[]): boolean;
+            (event: 'article/one', article: EmitterData.Support.Article[]): boolean;
+            (event: 'article/remove', data: number): boolean;
         }
 
         interface Listener<T = any> extends ISK.Listener<T, Socket> {
@@ -231,10 +254,10 @@ declare namespace IUser {
             (event: 'center/task-start', listener: ISK.ListenerHandle<{ taskId: number }>): T;
 
             /** 主管加入 task */
-            (event: 'center/task-join', listener: ISK.ListenerHandle<{taskId: number}>): T;
+            (event: 'center/task-join', listener: ISK.ListenerHandle<{ taskId: number }>): T;
 
             /** 主管離開 task */
-            (event: 'center/task-leave', listener: ISK.ListenerHandle<{taskId: number}>): T;
+            (event: 'center/task-leave', listener: ISK.ListenerHandle<{ taskId: number }>): T;
 
             /** 查詢所有房間 */
             (event: 'center/rooms', listener: ISK.ListenerHandle): T;
@@ -245,6 +268,11 @@ declare namespace IUser {
             /** 關閉 */
             (event: 'center/room-unready'): T;
         }
+        interface Listener<T = any> extends ISK.Listener<T, Socket> {
+            (event: 'article/save', listener: ISK.ListenerHandle<ListenerData.Article.Save>): T;
+            (event: 'article/remove', listener: ISK.ListenerHandle<number>): T;
+        }
+
 
         interface Namespace extends SocketIO.Namespace {
             on: Listener<this>;
@@ -264,7 +292,8 @@ declare namespace ICustomer {
             namespace Center {
                 interface Start {
                     executive: IES.UserInfo;
-                    watchers: IES.UserInfo;
+                    messages: IES.TaskCenter.Message;
+                    startAt: number;
                 }
             }
         }
@@ -273,11 +302,13 @@ declare namespace ICustomer {
 
         interface Emitter extends ISK.Emitter {
             // (event: 'firm', data: { id: number; name: string }): boolean;
-            (
-                event: 'center/start',
-                data: { executive: IES.UserInfo; messages: IES.TaskCenter.Message; startAt: number },
-            ): boolean;
+            (event: 'center/start', data: EmitterData.Center.Start): boolean;
+
+            (event: 'center/task', data: IES.TaskCenter.TaskForCustomer): boolean;
+
             (event: 'center/close'): boolean;
+
+            (event: 'center/waiting'): boolean;
         }
 
         interface Listener<T = any> extends ISK.Listener<T, Socket> {

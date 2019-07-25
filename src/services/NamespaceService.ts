@@ -4,7 +4,7 @@ import UserService from './UserService';
 import CustomerService from './CustomerService';
 import BaseService from './BaseService';
 import CenterService from './CenterService';
-import SupportService from './SupportService';
+import ArticleService from './ArticleService';
 
 interface CompanyItem {
     company: Company;
@@ -32,7 +32,7 @@ export const loadCompanyNamespace = async (io: SocketIO.Server) => {
             userService,
             customerService,
             new CenterService(userService, customerService),
-            new SupportService(userService),
+            new ArticleService(userService),
         ];
         mapCompanys.set(company.id, {
             company,

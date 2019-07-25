@@ -28,7 +28,7 @@ export class Article extends BaseEntity {
         type: 'int',
         unsigned: true,
     })
-    public userId!: string;
+    public userId!: number;
 
     @Column({
         type: 'boolean',

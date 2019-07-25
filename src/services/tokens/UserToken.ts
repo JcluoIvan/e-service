@@ -11,7 +11,17 @@ interface Data {
     token: string | null;
 }
 
+interface ListenerEvents<T> {
+    (event: string | symbol, listener: (...args: any[]) => void): T;
+    (event: 'connected', listener: () => void): T;
+    // tslint:disable-next-line:unified-signatures
+    (event: 'reconnected', listener: () => void): T;
+    // tslint:disable-next-line:unified-signatures
+    (event: 'disconnected', listener: () => void): T;
+}
+
 export default class UserToken extends EventEmitter {
+    public on!: ListenerEvents<this>;
     private surviveAt: number = 0;
     private data!: Data;
 
@@ -25,7 +35,7 @@ export default class UserToken extends EventEmitter {
     }
 
     get isOnline() {
-        return this.data.socket && this.data.socket.connected || false;
+        return (this.data.socket && this.data.socket.connected) || false;
     }
 
     get socket() {
@@ -57,7 +67,9 @@ export default class UserToken extends EventEmitter {
         this.data.socket = socket;
 
         this.generateToken();
+        this.onConnected();
 
+        this.emit('connected');
         return this.token;
     }
 
@@ -74,6 +86,9 @@ export default class UserToken extends EventEmitter {
         }
 
         this.data.socket = socket;
+        this.onConnected();
+
+        this.emit('reconnected');
         return this.token;
     }
 
@@ -82,8 +97,13 @@ export default class UserToken extends EventEmitter {
         this.socket.disconnect();
     }
 
-    public onDisconnected() {
+    private onDisconnected() {
         // do something
+        this.emit('disconnected');
+    }
+
+    private onConnected() {
+        this.socket.on('disconnect', () => this.onDisconnected());
     }
 
     private generateToken() {

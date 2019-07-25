@@ -15,7 +15,7 @@ import * as moment from 'moment';
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
-    (event: 'connected', listener: (data: { utoken: UserToken }) => void): void;
+    (event: 'connect', listener: (data: { utoken: UserToken }) => void): T;
 }
 
 const findByUsername = async (companyId: number, username: string) => {
@@ -87,7 +87,7 @@ export default class UserService extends EventEmitter {
                             loginAt: moment().format('YYYY-MM-DD HH:mm:ss'),
                         });
                         logger.info('send login');
-                        this.emit('connected', { utoken });
+                        this.emit('connect', { utoken });
                     }
                 }
             } catch (err) {
@@ -105,10 +105,6 @@ export default class UserService extends EventEmitter {
                         return;
                     }
 
-                    socket.on('disconnect', () => {
-                        utoken.onDisconnected();
-                    });
-
                     const resData: IUser.Socket.ListenerData.Login.Response = {
                         id: utoken.user.id,
                         username: utoken.user.username,
@@ -119,7 +115,7 @@ export default class UserService extends EventEmitter {
                         loginAt: moment().format('YYYY-MM-DD HH:mm:ss'),
                     };
                     res(responseSuccess(resData));
-                    this.emit('connected', { utoken });
+                    this.emit('connect', { utoken });
                 } catch (err) {
                     logger.error(`Error: ${err.message}`);
                     res(throwError(err));

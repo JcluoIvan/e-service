@@ -26,7 +26,7 @@ const generateToken = (name: string) => {
 };
 
 /** 斷線後，session 保留時間 */
-const DESTROY_DELAY = 1 * 60 * 1000;
+const DESTROY_DELAY = 10 * 1000; // 1 * 60 * 1000;
 
 export default class CustomerToken extends EventEmitter {
     public on!: ListenerEvents<this>;
