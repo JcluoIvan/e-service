@@ -1,0 +1,40 @@
+import { Request, Response, NextFunction } from 'express';
+import UserToken from '../services/tokens/UserToken';
+import { mapCompanys } from '../services/NamespaceService';
+import { UnknownCompanyOrTokenError } from '../exceptions/auth.error';
+import ArticleController from './ArticleController';
+import logger from '../logger';
+
+// tslint:disable-next-line:ban-types
+export declare type ObjectType<T> = (new () => T) | Function;
+
+// type
+export const handlerController = <T>(ControllerClass: ObjectType<T>) => {
+    return (cb: (ctrl: T) => Promise<void>) => {
+        return async (req: Request, res: Response, next: NextFunction) => {
+            cb(new (ControllerClass as any)(req, res, next)).catch(next);
+        };
+    };
+};
+
+export default class BaseController {
+    protected utoken!: UserToken;
+
+    get user() {
+        return this.utoken.user;
+    }
+
+    constructor(protected request: Request, protected response: Response, next: NextFunction) {
+        const token: string = request.query.token;
+        const cid: number = Number(request.query.cid) || 0;
+        const cp = mapCompanys.get(cid);
+
+        // const utoken = cp && cp.userService.users[0] || null;
+
+        const utoken = (cp && cp.userService.findByToken(token)) || null;
+        if (!utoken) {
+            throw new UnknownCompanyOrTokenError();
+        }
+        this.utoken = utoken;
+    }
+}

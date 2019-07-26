@@ -4,7 +4,6 @@ import UserService from './UserService';
 import CustomerService from './CustomerService';
 import BaseService from './BaseService';
 import CenterService from './CenterService';
-import ArticleService from './ArticleService';
 
 interface CompanyItem {
     company: Company;
@@ -20,7 +19,7 @@ const allCompanys = async () => {
         .getMany();
 };
 
-const mapCompanys = new Map<number, CompanyItem>();
+export const mapCompanys = new Map<number, CompanyItem>();
 
 export const loadCompanyNamespace = async (io: SocketIO.Server) => {
     const rows = await allCompanys();
@@ -28,12 +27,7 @@ export const loadCompanyNamespace = async (io: SocketIO.Server) => {
     rows.forEach((company) => {
         const userService = new UserService(company, io.of(`/${company.namespace}/service`) as any);
         const customerService = new CustomerService(company, io.of(`/${company.namespace}`) as any);
-        const services: BaseService[] = [
-            userService,
-            customerService,
-            new CenterService(userService, customerService),
-            new ArticleService(userService),
-        ];
+        const services: BaseService[] = [userService, customerService, new CenterService(userService, customerService)];
         mapCompanys.set(company.id, {
             company,
             services,

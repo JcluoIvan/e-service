@@ -6,8 +6,10 @@ import logger from './logger';
 import * as path from 'path';
 import { config } from 'dotenv';
 import { loadCompanyNamespace } from './services/NamespaceService';
-import { createConnection } from 'typeorm';
-
+import { createConnection, getConnection } from 'typeorm';
+import routeApi from './routes/api';
+import { BaseError } from './exceptions';
+import { User } from './entity/User';
 config();
 
 logger.info('msg = ', process.env.MESSAGE);
@@ -37,5 +39,13 @@ server.listen(3000, async () => {
 });
 
 const publicRoot = path.join(__dirname, '../public');
+app.use(express.json());
+// app.use(methodOverride());
+
 app.set('view options', { layout: false });
 app.use(express.static(publicRoot));
+app.use('/api', routeApi);
+app.use((err: BaseError, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.status(err instanceof BaseError ? err.statusCode : 500).send(err.message);
+    // next(err);
+});

@@ -19,9 +19,10 @@ interface ListenerEvents<T> {
 }
 
 const findByUsername = async (companyId: number, username: string) => {
+    const selects = ['id', 'password', 'username', 'name', 'role', 'company_id'];
     return await getConnection()
-        .getRepository(User)
-        .createQueryBuilder('user')
+        .createQueryBuilder(User, 'user')
+        .addSelect('user.password')
         .where('company_id = :companyId AND username = :username', { username, companyId })
         .getOne();
 };
@@ -80,6 +81,7 @@ export default class UserService extends EventEmitter {
                         socket.emit('login', {
                             id: utoken.user.id,
                             username: utoken.user.username,
+                            companyId: utoken.user.companyId,
                             imageUrl: utoken.user.imageUrl,
                             name: utoken.user.name,
                             role: utoken.user.role,
@@ -108,6 +110,7 @@ export default class UserService extends EventEmitter {
                     const resData: IUser.Socket.ListenerData.Login.Response = {
                         id: utoken.user.id,
                         username: utoken.user.username,
+                        companyId: utoken.user.companyId,
                         imageUrl: utoken.user.imageUrl,
                         role: utoken.user.role,
                         name: utoken.user.name,
@@ -123,8 +126,13 @@ export default class UserService extends EventEmitter {
             });
         });
     }
-    public getUserToken(id: number) {
+    public findById(id: number) {
         return this.data.users.get(id);
+    }
+
+    public findByToken(token: string) {
+        logger.warn(token, this.users.map((u) => u.token));
+        return this.users.find((u) => u.token === token) || null;
     }
 
     private async reconnect(token: string, socket: IUser.Socket) {
@@ -144,7 +152,7 @@ export default class UserService extends EventEmitter {
         }
 
         const user = await findByUsername(this.company.id, username);
-
+        logger.info(user);
         if (!user) {
             throw new LoginFailedError();
         }

@@ -39,6 +39,7 @@ export class User extends BaseEntity {
     public username!: string;
 
     @Column({
+        select: false,
         type: 'varchar',
         length: 50,
     })
@@ -94,6 +95,10 @@ export class User extends BaseEntity {
 
     get isSupervisor () {
         return this.role === UserRole.Supervisor;
+    }
+
+    public setPassword(password: string) {
+        this.password = password;
     }
 
     public checkPassword(password: string) {

@@ -158,6 +158,7 @@ declare namespace IUser {
                 interface Response {
                     id: number;
                     username: string;
+                    companyId: number;
                     name: string;
                     imageUrl: string;
                     role: 'admin' | 'supervisor' | 'executive';
