@@ -2,9 +2,10 @@ import BaseController from './BaseController';
 import { getConnection } from 'typeorm';
 import { StatusCode } from '../exceptions';
 import logger from '../logger';
-import { User } from '../entity/User';
+import { User, UserRole } from '../entity/User';
 import { UserNotFoundError } from '../exceptions/login.errors';
 import { UserRepository } from '../repository/UserRepository';
+import { isValid, isRequired, isMax, isMin, isIn, isWhen } from '../validations';
 
 export default class UserController extends BaseController {
     public async findUser() {
@@ -19,19 +20,16 @@ export default class UserController extends BaseController {
     }
 
     public async listUser() {
+        const queryData = this.request.query || {};
         const rows = await getConnection()
             .getCustomRepository(UserRepository)
-            .paginate(this.request.query, (query) => {
-                query.where('company_id = :cid', { cid: this.user.companyId });
+            .paginate(queryData, (buildQuery) => {
+                buildQuery.where('company_id = :cid', { cid: this.user.companyId }).addOrderBy('id', 'ASC');
+                const role = queryData.role;
+                if (role && role !== 'all') {
+                    buildQuery.andWhere('role = :role', { role: queryData.role });
+                }
             });
-
-        // const query = await getConnection()
-        //     .getRepository(User)
-        //     .
-        //     .createQueryBuilder()
-        //     .select(selects)
-        //     .where('companyId = :cid', { cid: this.user.id });
-        // const rows = await paginateQuery(query, this.request);
 
         this.response.send(rows);
     }
@@ -41,24 +39,30 @@ export default class UserController extends BaseController {
         const data = this.request.body;
         const cid = this.user.companyId;
         let lastId = 0;
+
+        isValid(data, {
+            username: id ? [] : [isRequired(), isMin(4), isMax(20)],
+            name: isRequired(),
+            role: isIn(UserRole),
+        });
+
         if (Number(id)) {
             const user = await getConnection()
                 .getRepository(User)
                 .createQueryBuilder('user')
-                .where('id = :id AND companyId = :cid', { id, cid })
+                .where('`id` = :id AND `company_id` = :cid', { id, cid })
                 .getOne();
 
             if (!user) {
                 throw new UserNotFoundError();
             }
-            user.username = data.username;
             user.name = data.name;
-            user.setPassword(data.password);
+            user.role = data.role;
             await user.save();
             lastId = Number(data.id);
         } else {
             const userEntity = new User();
-            userEntity.companyId = this.utoken.user.companyId;
+            userEntity.username = data.username;
             userEntity.name = data.name;
             userEntity.companyId = cid;
             userEntity.setPassword(data.password);

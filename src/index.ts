@@ -8,8 +8,9 @@ import { config } from 'dotenv';
 import { loadCompanyNamespace } from './services/NamespaceService';
 import { createConnection, getConnection } from 'typeorm';
 import routeApi from './routes/api';
-import { BaseError } from './exceptions';
+import { BaseError, ResponseCode } from './exceptions';
 import { User } from './entity/User';
+import { ValidationError } from './exceptions/validation.error';
 config();
 
 logger.info('msg = ', process.env.MESSAGE);
@@ -36,16 +37,29 @@ server.listen(3000, async () => {
 
     // const executiveService = new ExecutiveService(userService);
     // const centerService = new CenterService(userService, customerService);
+
 });
 
 const publicRoot = path.join(__dirname, '../public');
 app.use(express.json());
 // app.use(methodOverride());
-
 app.set('view options', { layout: false });
 app.use(express.static(publicRoot));
 app.use('/api', routeApi);
 app.use((err: BaseError, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.status(err instanceof BaseError ? err.statusCode : 500).send(err.message);
+    if (err instanceof ValidationError) {
+        res.status(err.statusCode).send({
+            code: err.code,
+            message: err.message,
+            errors: err.errors,
+        });
+        return;
+    }
+
+    res.status(err instanceof BaseError ? err.statusCode : 500).send({
+        code: err.code,
+        message: err.message,
+        stack: (err.stack || '').split('\n'),
+    });
     // next(err);
 });

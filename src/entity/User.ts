@@ -93,7 +93,7 @@ export class User extends BaseEntity {
         return this.image ? process.env.USER__IMAGE_URL + this.image : '';
     }
 
-    get isSupervisor () {
+    get isSupervisor() {
         return this.role === UserRole.Supervisor;
     }
 

@@ -74,6 +74,6 @@ export class Message extends BaseEntity {
     public createdAt!: string;
 
     public getContent() {
-        return this.type in MessageType ? process.env.MESSAGE__IMAGE_URL + this.content : this.content;
+        return this.type === MessageType.Image ? `${process.env.MESSAGE__IMAGE_URL}/${this.content}` : this.content;
     }
 }

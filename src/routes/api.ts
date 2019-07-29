@@ -24,4 +24,6 @@ router.get('/users', handleUser(async (ctrl) => await ctrl.listUser()));
 
 router.get('/users/:id', handleUser(async (ctrl) => await ctrl.findUser()));
 
+router.post('/users/:id/save', handleUser(async (ctrl) => await ctrl.saveUser()));
+
 export default router;
