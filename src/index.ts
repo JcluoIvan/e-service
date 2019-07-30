@@ -8,8 +8,8 @@ import { config } from 'dotenv';
 import { loadCompanyNamespace } from './services/NamespaceService';
 import { createConnection, getConnection } from 'typeorm';
 import routeApi from './routes/api';
+import routeImg from './routes/img';
 import { BaseError, ResponseCode } from './exceptions';
-import { User } from './entity/User';
 import { ValidationError } from './exceptions/validation.error';
 config();
 
@@ -37,15 +37,27 @@ server.listen(3000, async () => {
 
     // const executiveService = new ExecutiveService(userService);
     // const centerService = new CenterService(userService, customerService);
-
 });
 
-const publicRoot = path.join(__dirname, '../public');
 app.use(express.json());
 // app.use(methodOverride());
 app.set('view options', { layout: false });
-app.use(express.static(publicRoot));
+
+/** web */
+const serviceRoot = path.join(__dirname, '../public/service');
+const customerRoot = path.join(__dirname, '../public/customer');
+
+app.get('/service', (req, res) => res.sendStatus(404));
+app.use('/service/*', express.static(serviceRoot));
+app.use('/service-assigns', express.static(serviceRoot));
+
+app.get('/customer', (req, res) => res.sendStatus(404));
+app.use('/customer/*', express.static(customerRoot));
+app.use('/customer-assigns', express.static(customerRoot));
+
 app.use('/api', routeApi);
+app.use('/img', routeImg);
+
 app.use((err: BaseError, req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (err instanceof ValidationError) {
         res.status(err.statusCode).send({

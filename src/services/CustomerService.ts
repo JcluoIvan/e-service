@@ -1,4 +1,4 @@
-import { socketEventMiddleware, responseSuccess, throwError } from '../support';
+import { responseSuccess, throwError } from '../support';
 import logger from '../logger';
 import { EventEmitter } from 'events';
 import { Company } from '../entity/Company';

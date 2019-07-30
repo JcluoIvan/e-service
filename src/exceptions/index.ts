@@ -11,6 +11,10 @@ export enum ResponseCode {
     Success = 0,
     UnknownError = 1,
     Validation = 2,
+    /* 404 */
+    ResourceNotFound = 3,
+    /* 405 */
+    MethodNotAllowed = 4,
 }
 
 export class BaseError extends Error {

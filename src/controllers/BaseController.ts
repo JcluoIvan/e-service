@@ -6,15 +6,18 @@ import ArticleController from './ArticleController';
 import logger from '../logger';
 
 // tslint:disable-next-line:ban-types
-export declare type ObjectType<T> = (new () => T) | Function;
-
+type ObjectType<T> = (new () => T) | Function;
+type RouteFunction = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 // type
-export const handlerController = <T>(ControllerClass: ObjectType<T>) => {
+export const handlerController = <T extends BaseController>(ControllerClass: ObjectType<T>) => {
     return (cb: (ctrl: T) => Promise<void>) => {
         return async (req: Request, res: Response, next: NextFunction) => {
             cb(new (ControllerClass as any)(req, res, next)).catch(next);
         };
     };
+};
+export const handlerClosure = (cb: RouteFunction) => {
+    return async (req: Request, res: Response, next: NextFunction) => cb(req, res, next).catch(next);
 };
 
 export default class BaseController {

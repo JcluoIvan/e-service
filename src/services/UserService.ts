@@ -1,7 +1,7 @@
 import { User, UserRole } from '../entity/User';
 import { getConnection } from 'typeorm';
 import { LoginFailedError } from '../exceptions/login.errors';
-import { responseSuccess, socketEventMiddleware, throwError } from '../support';
+import { responseSuccess, throwError } from '../support';
 import logger from '../logger';
 import { EventEmitter } from 'events';
 import UserToken from './tokens/UserToken';

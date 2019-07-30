@@ -2,7 +2,6 @@ import BaseController from './BaseController';
 import { Article } from '../entity/Article';
 import { getConnection } from 'typeorm';
 import { ArticleNotFoundError } from '../exceptions/article.error';
-import * as validator from 'validator';
 import { StatusCode } from '../exceptions';
 import logger from '../logger';
 

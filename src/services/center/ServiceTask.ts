@@ -8,9 +8,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import CustomerToken from '../tokens/CustomerToken';
 import UserToken from '../tokens/UserToken';
-import { clearTimeout, setTimeout } from 'timers';
+import * as jimp from 'jimp';
 import logger from '../../logger';
-import { User } from '../../entity/User';
+import { fileExists } from '../../support/file';
 
 type CacheMessage = IES.TaskCenter.Message;
 
@@ -230,11 +230,29 @@ export default class ServiceTask {
     }
 
     public async uploadImage(data: string, ext: 'jpg' | 'png') {
-        return new Promise<string>((resolve, reject) => {
-            const filename = `${md5(data)}.${ext}`;
+        return new Promise<string>(async (resolve, reject) => {
+            const fname = md5(data);
+            const filename = `${fname}.${ext}`;
             const filepath = path.join(process.env.MESSAGE__IMAGE_UPLOAD_PATH, filename);
-            fs.writeFile(filepath, data, 'base64', (err) => {
-                return err ? reject(err) : resolve(filename);
+
+            const exists = await fileExists(filepath);
+            if (exists) {
+                resolve(filename);
+                return;
+            }
+
+            const base64Data = data.replace(/^data:image\/(png|jpeg);base64,/, '');
+            fs.writeFile(filepath, base64Data, 'base64', async (err) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                /* 縮圖 */
+                const minpath = path.join(process.env.MESSAGE__IMAGE_UPLOAD_PATH, `${fname}.min.${ext}`);
+                const image = await jimp.read(filepath);
+                image.scaleToFit(240, 240).write(minpath, (e) => logger.error(e));
+                resolve(filename);
             });
         });
     }
