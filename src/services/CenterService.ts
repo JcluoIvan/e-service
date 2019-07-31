@@ -95,8 +95,8 @@ export default class CenterService extends BaseService {
         if (!this.mapCustomer.has(ctoken.token)) {
             this.mapCustomer.add(ctoken.token);
             ctoken.on('destroy', () => {
-                const executive = task.executive;
                 task.close();
+                this.mapTasks.delete(task.id);
                 this.mapCustomer.delete(ctoken.token);
             });
         }
@@ -251,47 +251,5 @@ export default class CenterService extends BaseService {
         const room = new ServiceRoom(utoken);
         this.mapRooms.set(utoken.user.id, room);
         return room;
-
-        // room.on('ready', () => {
-        //     this.loopQueues.push(room);
-        //     this.dispatchTask();
-        //     utoken.socket.nsp.emit('center/room-ready', { userId: room.id });
-        // });
-
-        // room.on('unready', () => {
-        //     this.loopQueues = this.loopQueues.filter((lq) => lq !== room);
-        //     utoken.socket.nsp.emit('center/room-unready', { userId: room.id });
-        // });
-
-        // room.on('add-task', ({ task }) => {
-        //     logger.error('add-task');
-        //     const data: IUser.Socket.EmitterData.Center.DespatchTask = {
-        //         taskId: task.id,
-        //         executive: {
-        //             id: utoken.user.id,
-        //             name: utoken.user.name,
-        //             imageUrl: utoken.user.imageUrl,
-        //         },
-        //     };
-        //     utoken.socket.nsp.emit('center/despatch-task', data);
-        // });
-
-        // room.on('connect', () => {
-        //     utoken.socket.emit('center/room', room.toJson());
-        // });
-
-        // room.on('disconnect', () => {
-        //     utoken.socket.nsp.emit('center/room', room.toJson());
-
-        //     /** 離開所有 watch 的 task */
-        //     const warr = this.watchers.get(utoken.user.id) || [];
-        //     warr.forEach((t) => {
-        //         t.leaveWatcher(utoken.user.id);
-        //     });
-        //     this.watchers.delete(utoken.user.id);
-        // });
-
-        // this.mapRooms.set(utoken.user.id, room);
-        // return room;
     }
 }

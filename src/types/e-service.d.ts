@@ -1,5 +1,6 @@
 declare namespace NodeJS {
     interface ProcessEnv {
+        PORT: string;
         MESSAGE__IMAGE_UPLOAD_PATH: string;
         MESSAGE__IMAGE_URL: string;
         USER__IMAGE_UPLOAD_PATH: string;
