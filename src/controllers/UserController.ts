@@ -1,7 +1,7 @@
 import BaseController from './BaseController';
 import { getConnection } from 'typeorm';
 import { StatusCode } from '../exceptions';
-import logger from '../logger';
+import logger from '../config/logger';
 import { User, UserRole } from '../entity/User';
 import { UserNotFoundError } from '../exceptions/login.errors';
 import { UserRepository } from '../repository/UserRepository';

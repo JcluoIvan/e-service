@@ -3,8 +3,9 @@ import { AssignUserTokenError, UserNotFoundError, LoginFailedError } from '../..
 import * as md5 from 'md5';
 import { getConnection } from 'typeorm';
 import { SocketUndefinedError } from '../../exceptions/token.error';
-import logger from '../../logger';
+import logger from '../../config/logger';
 import { EventEmitter } from 'events';
+import { clearTimeout, setTimeout } from 'timers';
 interface Data {
     user: User;
     socket: IUser.Socket | null;
@@ -18,12 +19,18 @@ interface ListenerEvents<T> {
     (event: 'reconnected', listener: () => void): T;
     // tslint:disable-next-line:unified-signatures
     (event: 'disconnected', listener: () => void): T;
+    // tslint:disable-next-line:unified-signatures
+    (event: 'destroy', listener: () => void): T;
 }
+
+/** 斷線後，session 保留時間 */
+const DESTROY_DELAY = 3 * 1000; // 1 * 60 * 1000;
 
 export default class UserToken extends EventEmitter {
     public on!: ListenerEvents<this>;
     private surviveAt: number = 0;
     private data!: Data;
+    private destroyTimes: NodeJS.Timer | null = null;
 
     constructor(user: User) {
         super();
@@ -70,6 +77,7 @@ export default class UserToken extends EventEmitter {
         this.onConnected();
 
         this.emit('connected');
+        this.clearDestroyTime();
         return this.token;
     }
 
@@ -89,6 +97,7 @@ export default class UserToken extends EventEmitter {
         this.onConnected();
 
         this.emit('reconnected');
+        this.clearDestroyTime();
         return this.token;
     }
 
@@ -97,9 +106,23 @@ export default class UserToken extends EventEmitter {
         this.socket.disconnect();
     }
 
+    public destroy() {
+        logger.error(`user destroy : ${this.user.username}`);
+        this.emit('destroy');
+        this.destroyTimes = null;
+        this.removeAllListeners();
+    }
+
     private onDisconnected() {
         // do something
         this.emit('disconnected');
+        if (this.isOnline) {
+            this.socket.disconnect();
+        }
+        this.clearDestroyTime();
+        this.destroyTimes = setTimeout(() => {
+            this.destroy();
+        }, DESTROY_DELAY);
     }
 
     private onConnected() {
@@ -109,5 +132,12 @@ export default class UserToken extends EventEmitter {
     private generateToken() {
         this.data.token = md5(`${new Date().getTime()}:${this.user.id}:${this.user.username}`);
         return this.data.token;
+    }
+
+    private clearDestroyTime() {
+        if (this.destroyTimes) {
+            clearTimeout(this.destroyTimes);
+            this.destroyTimes = null;
+        }
     }
 }

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import ArticleController from '../controllers/ArticleController';
-import logger from '../logger';
+import logger from '../config/logger';
 import { handlerController } from '../controllers/BaseController';
 import UserController from '../controllers/UserController';
 

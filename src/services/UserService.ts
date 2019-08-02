@@ -2,7 +2,7 @@ import { User, UserRole } from '../entity/User';
 import { getConnection } from 'typeorm';
 import { LoginFailedError } from '../exceptions/login.errors';
 import { responseSuccess, throwError } from '../support';
-import logger from '../logger';
+import logger from '../config/logger';
 import { EventEmitter } from 'events';
 import UserToken from './tokens/UserToken';
 import { Company } from '../entity/Company';
@@ -59,20 +59,6 @@ export default class UserService extends EventEmitter {
         };
 
         nsp.on('connect', async (socket: IUser.Socket) => {
-            logger.info('connect');
-
-            /* middleware - handle error */
-            // const socket: IUser.Socket.Socket = socketEventMiddleware<IUser.Socket.Socket>(
-            //     originSocket,
-            //     async (response, next) => {
-            //         try {
-            //             response(responseSuccess(await next()));
-            //         } catch (err) {
-            //             logger.error(`Error: ${err.message}`);
-            //             response(throwError(err));
-            //         }
-            //     },
-            // );
             try {
                 const token = socket.handshake.query.token || '';
                 if (token) {
@@ -88,7 +74,6 @@ export default class UserService extends EventEmitter {
                             token: utoken.token,
                             loginAt: moment().format('YYYY-MM-DD HH:mm:ss'),
                         });
-                        logger.info('send login');
                         this.emit('connect', { utoken });
                     }
                 }
@@ -131,14 +116,13 @@ export default class UserService extends EventEmitter {
     }
 
     public findByToken(token: string) {
-        logger.warn(token, this.users.map((u) => u.token));
+        logger.warn(`find token = ${token}`, this.users.map((u) => u.token));
         return this.users.find((u) => u.token === token) || null;
     }
 
     private async reconnect(token: string, socket: IUser.Socket) {
         const utoken = Array.from(this.users.values()).find((u) => u.token === token);
         if (!utoken) {
-            logger.warn('not found utoken', token, this.users.map((o) => o.token));
             return false;
         }
         const res = await utoken.reconnect(socket, token);
@@ -152,14 +136,16 @@ export default class UserService extends EventEmitter {
         }
 
         const user = await findByUsername(this.company.id, username);
-        logger.info(user);
         if (!user) {
             throw new LoginFailedError();
         }
 
         const utoken = new UserToken(user);
         this.data.users.set(user.id, utoken);
-
+        utoken.on('destroy', () => {
+            console.info('destroy');
+            this.data.users.delete(user.id);
+        });
         return utoken;
     }
 }

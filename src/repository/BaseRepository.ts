@@ -1,5 +1,5 @@
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import logger from '../logger';
+import logger from '../config/logger';
 
 export interface PaginateData<T> {
     rows: T[];

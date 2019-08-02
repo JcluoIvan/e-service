@@ -1,14 +1,14 @@
-import UserService from './UserService';
-import CustomerService from './CustomerService';
-import logger from '../logger';
-import ServiceTask from './center/ServiceTask';
-import ServiceRoom from './center/ServiceRoom';
-import { UserRole, User } from '../entity/User';
-import { throwError, responseSuccess } from '../support';
-import { TaskNotFoundError, NotInTaskError } from '../exceptions/center.error';
-import CustomerToken from './tokens/CustomerToken';
-import UserToken from './tokens/UserToken';
-import BaseService from './BaseService';
+import UserService from '../UserService';
+import CustomerService from '../CustomerService';
+import logger from '../../config/logger';
+import TalkService from './CustomerRoom';
+import RoomService from './UserRoom';
+import { UserRole, User } from '../../entity/User';
+import { throwError, responseSuccess } from '../../support';
+import { TalkNotFoundError, NotInTalkError } from '../../exceptions/center.error';
+import CustomerToken from '../tokens/CustomerToken';
+import UserToken from '../tokens/UserToken';
+import BaseService from '../BaseService';
 
 enum Mode {
     /* 平均 */
@@ -21,9 +21,9 @@ enum Mode {
  * 服務中心
  */
 export default class CenterService extends BaseService {
-    private mapTasks = new Map<number, ServiceTask>();
+    private mapTalks = new Map<number, TalkService>();
 
-    private mapRooms = new Map<number, ServiceRoom>();
+    private mapRooms = new Map<number, RoomService>();
 
     private mapCustomer = new Set<string>();
 
@@ -32,19 +32,19 @@ export default class CenterService extends BaseService {
         max: 1,
     };
 
-    private loopQueues: ServiceRoom[] = [];
+    private loopQueues: RoomService[] = [];
 
     get rooms() {
         return Array.from(this.mapRooms.values());
     }
 
-    get tasks() {
-        return Array.from(this.mapTasks.values());
+    get talks() {
+        return Array.from(this.mapTalks.values());
     }
 
     /* 待處理佇列 */
-    get taskQueues() {
-        return this.tasks.filter((t) => !t.executive);
+    get talkQueues() {
+        return this.talks.filter((t) => !t.executive);
     }
 
     constructor(private userService: UserService, private customerService: CustomerService) {
@@ -57,12 +57,12 @@ export default class CenterService extends BaseService {
         userService.on('connect', ({ utoken }) => this.onUserConnected(utoken));
     }
 
-    private getTask(taskId: number) {
-        const task = this.mapTasks.get(taskId);
-        if (!task) {
-            throw new TaskNotFoundError();
+    private getTalk(talkId: number) {
+        const talk = this.mapTalks.get(talkId);
+        if (!talk) {
+            throw new TalkNotFoundError();
         }
-        return task;
+        return talk;
     }
 
     /**
@@ -72,37 +72,36 @@ export default class CenterService extends BaseService {
      * @param citem 顧客資料
      */
     private async onCustomerConnected(ctoken: CustomerToken) {
-        /* 建立 task */
-        const task = await this.findOrCreateTask(ctoken);
+        /* 建立 talk */
+        const talk = await this.findOrCreateTalk(ctoken);
 
         /* 顧客主動中斷 (已完成) */
-        ctoken.socket.on('center/close', () => {
-            const executive = task.executive;
-            task.close();
+        ctoken.socket.on('talks/close', () => {
+            talk.close();
             ctoken.destroy();
         });
 
         /** 發送訊息 */
-        ctoken.socket.on('center/send', async (data, res) => {
-            const { id, content, time } = await task.sendMessage(data);
+        ctoken.socket.on('talks/send', async (data, res) => {
+            const { id, content, time } = await talk.sendMessage(data);
             res(responseSuccess({ id, content, time }));
         });
 
         ctoken.socket.on('disconnect', () => {
-            task.onDisconnected();
+            talk.onDisconnected();
         });
 
         if (!this.mapCustomer.has(ctoken.token)) {
             this.mapCustomer.add(ctoken.token);
             ctoken.on('destroy', () => {
-                task.close();
-                this.mapTasks.delete(task.id);
+                talk.close();
+                this.mapTalks.delete(talk.id);
                 this.mapCustomer.delete(ctoken.token);
             });
         }
 
-        this.updateTask(task);
-        this.dispatchTask();
+        this.updateTalk(talk);
+        this.dispatchTalk();
     }
 
     /**
@@ -114,34 +113,34 @@ export default class CenterService extends BaseService {
         /* 建立房間 */
         const sroom = await this.findOrGenerateRoom(utoken);
 
-        this.updateTasks(utoken.socket);
+        this.updateTalks(utoken.socket);
         this.updateRooms(utoken.socket);
         this.updateWatchers(utoken, true);
 
-        this.tasks
+        this.talks
             .filter((t) => t.executive && t.executive.user.id === utoken.user.id)
-            .forEach((task) => {
-                utoken.socket.emit('center/task-detail', task.toJsonDetail(utoken));
-                task.updateExecutive();
+            .forEach((talk) => {
+                utoken.socket.emit('talks/talk-detail', talk.toJsonDetail(utoken));
+                talk.updateExecutive();
             });
 
-        utoken.socket.on('center/send', async (data, res) => {
+        utoken.socket.on('talks/send', async (data, res) => {
             try {
-                const task = this.getTask(data.taskId);
-                const { id, content, time } = await task.sendMessage(data, utoken.user.id);
+                const talk = this.getTalk(data.talkId);
+                const { id, content, time } = await talk.sendMessage(data, utoken.user.id);
                 res(responseSuccess({ id, content, time }));
             } catch (err) {
                 res(throwError(err));
             }
         });
 
-        utoken.socket.on('center/room-ready', (res) => sroom.ready());
-        utoken.socket.on('center/room-unready', (res) => sroom.unready());
-        utoken.socket.on('center/task-start', ({ taskId }) => {
+        utoken.socket.on('talks/room-ready', (res) => sroom.ready());
+        utoken.socket.on('talks/room-unready', (res) => sroom.unready());
+        utoken.socket.on('talks/talk-start', ({ talkId }) => {
             try {
-                const task = taskId ? this.getTask(taskId) : this.taskQueues[0];
-                if (task) {
-                    task.start(utoken);
+                const talk = talkId ? this.getTalk(talkId) : this.talkQueues[0];
+                if (talk) {
+                    talk.start(utoken);
                 }
             } catch (err) {
                 utoken.socket.emit('message/error', err.message);
@@ -150,19 +149,19 @@ export default class CenterService extends BaseService {
 
         utoken.socket.on('disconnect', () => {
             logger.error(utoken.isOnline);
-            this.tasks
+            this.talks
                 .filter((t) => t.executive && t.executive.user.id === utoken.user.id)
-                .forEach((task) => {
-                    task.updateExecutive();
+                .forEach((talk) => {
+                    talk.updateExecutive();
                 });
         });
 
-        utoken.socket.on('center/task-join', ({ taskId }) => {
+        utoken.socket.on('talks/talk-join', ({ talkId }) => {
             try {
-                const task = this.getTask(taskId);
-                if (utoken.user.isSupervisor || task.isClosed) {
-                    task.joinWatcher(utoken);
-                    utoken.socket.emit('center/task-detail', task.toJsonDetail(utoken));
+                const talk = this.getTalk(talkId);
+                if (utoken.user.isSupervisor || talk.isClosed) {
+                    talk.joinWatcher(utoken);
+                    utoken.socket.emit('talks/talk-detail', talk.toJsonDetail(utoken));
                     this.updateWatchers(utoken);
                 }
             } catch (err) {
@@ -170,30 +169,30 @@ export default class CenterService extends BaseService {
             }
         });
 
-        utoken.socket.on('center/task-leave', ({ taskId }) => {
+        utoken.socket.on('talks/talk-leave', ({ talkId }) => {
             try {
-                const task = this.getTask(taskId);
-                task.leaveWatcher(utoken);
+                const talk = this.getTalk(talkId);
+                talk.leaveWatcher(utoken);
                 this.updateWatchers(utoken);
             } catch (err) {
                 utoken.socket.emit('message/error', { message: err.message });
             }
         });
     }
-    private async findOrCreateTask(ctoken: CustomerToken) {
-        const find = this.tasks.find((t) => t.customer.token === ctoken.token);
+    private async findOrCreateTalk(ctoken: CustomerToken) {
+        const find = this.talks.find((t) => t.customer.token === ctoken.token);
         if (find) {
             find.onReconnected();
             return find;
         }
 
-        const task = await ServiceTask.createTask(ctoken, this.userService.nsp);
-        this.mapTasks.set(task.id, task);
-        return task;
+        const talk = await TalkService.createTalk(ctoken, this.userService.nsp);
+        this.mapTalks.set(talk.id, talk);
+        return talk;
     }
 
     /* 任務分配 */
-    private dispatchTask() {
+    private dispatchTalk() {
         // const setting = this.setting;
         // let room: ServiceRoom | null = null;
         // logger.error(this.taskQueues.length, this.loopQueues.length);
@@ -217,28 +216,28 @@ export default class CenterService extends BaseService {
         // }
     }
 
-    private updateTasks(socket: IUser.Socket | IUser.Socket.Namespace) {
-        socket.emit('center/tasks', this.tasks.map((t) => t.toJson()));
+    private updateTalks(socket: IUser.Socket | IUser.Socket.Namespace) {
+        socket.emit('talks/talks', this.talks.map((t) => t.toJson()));
     }
 
-    private updateTask(task: ServiceTask) {
-        this.userService.nsp.emit('center/task', task.toJson());
+    private updateTalk(talk: TalkService) {
+        this.userService.nsp.emit('talks/talk', talk.toJson());
     }
 
     private updateRooms(io: IUser.Socket | IUser.Socket.Namespace) {
-        io.emit('center/rooms', this.rooms.map((r) => r.toJson()));
+        io.emit('talks/rooms', this.rooms.map((r) => r.toJson()));
     }
 
     private updateWatchers(utoken: UserToken, detail = false) {
-        const tasks = this.tasks.filter((task) => {
-            return task.watchers.some((w) => w.user.id === utoken.user.id);
+        const talks = this.talks.filter((talk) => {
+            return talk.watchers.some((w) => w.user.id === utoken.user.id);
         });
         if (detail) {
-            tasks.forEach((task) => {
-                utoken.socket.emit('center/task-detail', task.toJsonDetail(utoken));
+            talks.forEach((talk) => {
+                utoken.socket.emit('talks/talk-detail', talk.toJsonDetail(utoken));
             });
         }
-        utoken.socket.emit('center/task-watchers', tasks.map((t) => t.id));
+        utoken.socket.emit('talks/talk-watchers', talks.map((t) => t.id));
     }
 
     private async findOrGenerateRoom(utoken: UserToken) {
@@ -248,7 +247,7 @@ export default class CenterService extends BaseService {
             return find;
         }
 
-        const room = new ServiceRoom(utoken);
+        const room = new RoomService(utoken);
         this.mapRooms.set(utoken.user.id, room);
         return room;
     }

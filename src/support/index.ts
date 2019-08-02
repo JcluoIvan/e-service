@@ -1,4 +1,4 @@
-import logger from '../logger';
+import logger from '../config/logger';
 import { BaseError } from '../exceptions';
 
 export const throwError = (err: BaseError): ISK.Response.Data => {
@@ -15,3 +15,4 @@ export const responseSuccess = <T = any>(data: T, message?: string): ISK.Respons
         message,
     };
 };
+export const ipAddress = (ip: string) => ip.replace(/^\:\:ffff\:/, '');

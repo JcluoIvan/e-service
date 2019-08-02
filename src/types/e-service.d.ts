@@ -15,10 +15,11 @@ declare namespace IES {
         imageUrl: string;
     }
 
-    namespace TaskCenter {
-        interface Task {
+    namespace Talks {
+        interface Talk {
             id: number;
             name: string;
+            ip: string;
             online: boolean;
             executive: UserInfo;
             disconnectedAt: number;
@@ -27,23 +28,23 @@ declare namespace IES {
             createdAt: number;
         }
 
-        interface TaskDetail extends Task {
+        interface TalkDetail extends Talk {
             watchers: UserInfo[];
-            messages: IES.TaskCenter.Message[];
+            messages: IES.Talks.Message[];
         }
-        interface TaskForCustomer {
+        interface TalkForCustomer {
             id: number;
             name: string;
             online: boolean;
             executive: UserInfo;
             startAt: number;
             createdAt: number;
-            messages: IES.TaskCenter.Message[];
+            messages: IES.Talks.Message[];
         }
 
         interface Message {
             id: number;
-            taskId: number;
+            talkId: number;
             user: IES.UserInfo;
             content: string;
             type: 'text' | 'image';
@@ -68,18 +69,18 @@ declare namespace ISK {
 
     namespace EmitterData {
         interface CenterJoin {
-            taskId: number;
+            talkId: number;
             user: IES.UserInfo;
         }
         interface CenterLeave {
-            taskId: number;
+            talkId: number;
             userId: number;
         }
     }
     namespace ListenerData {
         namespace Message {
             interface Request {
-                taskId: number;
+                talkId: number;
                 content: string;
                 type: 'text/plain' | 'image/jpeg' | 'image/png';
             }
@@ -96,15 +97,15 @@ declare namespace ISK {
         (event: 'disconnect'): boolean;
         (event: 'token', data: { token: string }): boolean;
         /** 發送訊息 */
-        (event: 'center/message', data: IES.TaskCenter.Message): boolean;
+        (event: 'talks/message', data: IES.Talks.Message): boolean;
         /** 主管加入 */
-        (event: 'center/join', data: EmitterData.CenterJoin): boolean;
+        (event: 'talks/join', data: EmitterData.CenterJoin): boolean;
         /** 主管離開 */
-        (event: 'center/leave', data: EmitterData.CenterLeave): boolean;
+        (event: 'talks/leave', data: EmitterData.CenterLeave): boolean;
         /** 任務關閉 */
-        (event: 'center/close', data: { taskId: number }): boolean;
+        (event: 'talks/close', data: { talkId: number }): boolean;
         /** 更新任務詳細內容 */
-        (event: 'center/task-detail', data: IES.TaskCenter.TaskDetail): boolean;
+        (event: 'talks/talk-detail', data: IES.Talks.TalkDetail): boolean;
     }
 
     interface Listener<T = () => void, S = any> {
@@ -114,7 +115,7 @@ declare namespace ISK {
 
         /** 收到訊息 */
         (
-            event: 'center/send',
+            event: 'talks/send',
             listener: ListenerHandle<ListenerData.Message.Request, ListenerData.Message.Response>,
         ): T;
     }
@@ -135,7 +136,7 @@ declare namespace IUser {
                     online: boolean;
                 }
 
-                interface Task extends IES.TaskCenter.Task {
+                interface Talk extends IES.Talks.Talk {
                     executive: UserInfo;
                 }
             }
@@ -186,55 +187,56 @@ declare namespace IUser {
 
             (event: 'message/error', data: { message: string }): boolean;
 
-            (event: 'center/tasks', data: EmitterData.Center.Task[]): boolean;
+            (event: 'talks/talks', data: EmitterData.Center.Talk[]): boolean;
 
-            (event: 'center/task', data: EmitterData.Center.Task): boolean;
+            (event: 'talks/talk', data: EmitterData.Center.Talk): boolean;
 
-            (event: 'center/task-lock', data: { taskId: number }): boolean;
+            (event: 'talks/talk-lock', data: { talkId: number }): boolean;
 
-            (event: 'center/task-unlock', data: { taskId: number }): boolean;
+            (event: 'talks/talk-unlock', data: { talkId: number }): boolean;
 
             /** guest 離線 / 斷線 */
-            (event: 'center/task-offline', data: { taskId: number; disconnectedAt: number }): boolean;
+            (event: 'talks/talk-offline', data: { talkId: number; disconnectedAt: number }): boolean;
 
             /** guest 上線 / 重新連線 */
-            (event: 'center/task-online', data: { taskId: number }): boolean;
+            (event: 'talks/talk-online', data: { talkId: number }): boolean;
 
             /** 服務人員更新 / 斷線 / 上線 等... */
-            (event: 'center/task-executive', data: { taskId: number; executive: EmitterData.UserInfo }): boolean;
+            (event: 'talks/talk-executive', data: { talkId: number; executive: EmitterData.UserInfo }): boolean;
 
-            /** task 完成 */
-            (event: 'center/task-closed', data: { taskId: number; clostedAt: number }): boolean;
+            /** talk 完成 */
+            (event: 'talks/talk-closed', data: { talkId: number; clostedAt: number }): boolean;
 
             /** 更新任務列表 */
-            (event: 'center/task-queue', data: IES.TaskCenter.Task[]): boolean;
+            (event: 'talks/talk-queue', data: IES.Talks.Talk[]): boolean;
 
-            /** 捨棄 task (未開始 & 顧客離線且 session 過期) */
-            (event: 'center/task-discard', data: { taskId: number }): boolean;
+            /** 捨棄 talk (未開始 & 顧客離線且 session 過期) */
+            (event: 'talks/talk-discard', data: { talkId: number }): boolean;
 
-            /** 更新 watch tasks */
-            (event: 'center/task-watchers', data: number[]): boolean;
+            /** 更新 watch talks */
+            (event: 'talks/talk-watchers', data: number[]): boolean;
 
             /** 任務分派 */
             (
-                event: 'center/task-start',
+                event: 'talks/talk-start',
                 data: {
-                    taskId: number;
+                    talkId: number;
+                    startAt: number;
                     executive: IES.UserInfo;
                 },
             ): boolean;
 
             /** 更新所有房間 */
-            (event: 'center/rooms', data: EmitterData.Center.Room[]): boolean;
+            (event: 'talks/rooms', data: EmitterData.Center.Room[]): boolean;
 
             /** 更新單一房間 */
-            (event: 'center/room', data: EmitterData.Center.Room): boolean;
+            (event: 'talks/room', data: EmitterData.Center.Room): boolean;
 
             /** 某專員轉為 ready */
-            (event: 'center/room-ready', data: { userId: number }): boolean;
+            (event: 'talks/room-ready', data: { userId: number }): boolean;
 
             /** 某專員轉為 unready */
-            (event: 'center/room-unready', data: { userId: number }): boolean;
+            (event: 'talks/room-unready', data: { userId: number }): boolean;
         }
 
         /** articles emitters */
@@ -249,26 +251,26 @@ declare namespace IUser {
 
             // (event: 'customer/join', listener: (data: { id?: string; name: string }, response: () => void) => void): T;
 
-            (event: 'center/task-lock', listener: ISK.ListenerHandle<number>): T;
-            (event: 'center/task-unlock', listener: ISK.ListenerHandle<number>): T;
+            (event: 'talks/talk-lock', listener: ISK.ListenerHandle<number>): T;
+            (event: 'talks/talk-unlock', listener: ISK.ListenerHandle<number>): T;
 
             /** 開始服務顧客 */
-            (event: 'center/task-start', listener: ISK.ListenerHandle<{ taskId: number }>): T;
+            (event: 'talks/talk-start', listener: ISK.ListenerHandle<{ talkId: number }>): T;
 
-            /** 主管加入 task */
-            (event: 'center/task-join', listener: ISK.ListenerHandle<{ taskId: number }>): T;
+            /** 主管加入 talk */
+            (event: 'talks/talk-join', listener: ISK.ListenerHandle<{ talkId: number }>): T;
 
-            /** 主管離開 task */
-            (event: 'center/task-leave', listener: ISK.ListenerHandle<{ taskId: number }>): T;
+            /** 主管離開 talk */
+            (event: 'talks/talk-leave', listener: ISK.ListenerHandle<{ talkId: number }>): T;
 
             /** 查詢所有房間 */
-            (event: 'center/rooms', listener: ISK.ListenerHandle): T;
+            (event: 'talks/rooms', listener: ISK.ListenerHandle): T;
 
             /** 開啟 */
-            (event: 'center/room-ready'): T;
+            (event: 'talks/room-ready'): T;
 
             /** 關閉 */
-            (event: 'center/room-unready'): T;
+            (event: 'talks/room-unready'): T;
         }
         interface Listener<T = any> extends ISK.Listener<T, Socket> {
             (event: 'article/save', listener: ISK.ListenerHandle<ListenerData.Article.Save>): T;
@@ -294,7 +296,7 @@ declare namespace ICustomer {
             namespace Center {
                 interface Start {
                     executive: IES.UserInfo;
-                    messages: IES.TaskCenter.Message;
+                    messages: IES.Talks.Message;
                     startAt: number;
                 }
             }
@@ -304,17 +306,17 @@ declare namespace ICustomer {
 
         interface Emitter extends ISK.Emitter {
             // (event: 'firm', data: { id: number; name: string }): boolean;
-            (event: 'center/start', data: EmitterData.Center.Start): boolean;
+            (event: 'talks/start', data: EmitterData.Center.Start): boolean;
 
-            (event: 'center/task', data: IES.TaskCenter.TaskForCustomer): boolean;
+            (event: 'talks/talk', data: IES.Talks.TalkForCustomer): boolean;
 
-            (event: 'center/close'): boolean;
+            (event: 'talks/close'): boolean;
 
-            (event: 'center/waiting'): boolean;
+            (event: 'talks/waiting'): boolean;
         }
 
         interface Listener<T = any> extends ISK.Listener<T, Socket> {
-            (event: 'center/close', listener: void): T;
+            (event: 'talks/close', listener: void): T;
         }
         interface Namespace extends SocketIO.Namespace {
             on: Listener<this>;

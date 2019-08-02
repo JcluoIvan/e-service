@@ -1,6 +1,6 @@
 import { isObject, isString } from 'util';
 import { ValidationError } from '../exceptions/validation.error';
-import logger from '../logger';
+import logger from '../config/logger';
 
 // export const exists = ()
 export type ValidationFunction = (value: any, key: string, data: any) => true | string;

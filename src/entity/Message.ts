@@ -1,14 +1,4 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    OneToOne,
-    JoinColumn,
-    Unique,
-    Index,
-    BaseEntity,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index, BaseEntity } from 'typeorm';
 
 export enum MessageType {
     /* 文字內容 */
@@ -26,13 +16,13 @@ export class Message extends BaseEntity {
     public id!: number;
 
     @Column({
-        name: 'task_id',
+        name: 'talk_id',
         type: 'integer',
         nullable: false,
         unsigned: true,
     })
     @Index()
-    public taskId!: number;
+    public talkId!: number;
 
     @Column({
         type: 'varchar',

@@ -3,7 +3,7 @@ import UserToken from '../services/tokens/UserToken';
 import { mapCompanys } from '../services/NamespaceService';
 import { UnknownCompanyOrTokenError } from '../exceptions/auth.error';
 import ArticleController from './ArticleController';
-import logger from '../logger';
+import logger from '../config/logger';
 
 // tslint:disable-next-line:ban-types
 type ObjectType<T> = (new () => T) | Function;
@@ -12,7 +12,11 @@ type RouteFunction = (req: Request, res: Response, next: NextFunction) => Promis
 export const handlerController = <T extends BaseController>(ControllerClass: ObjectType<T>) => {
     return (cb: (ctrl: T) => Promise<void>) => {
         return async (req: Request, res: Response, next: NextFunction) => {
-            cb(new (ControllerClass as any)(req, res, next)).catch(next);
+            try {
+                cb(new (ControllerClass as any)(req, res, next)).catch(next);
+            } catch (err) {
+                next(err);
+            }
         };
     };
 };
@@ -31,6 +35,11 @@ export default class BaseController {
         const token: string = request.query.token;
         const cid: number = Number(request.query.cid) || 0;
         const cp = mapCompanys.get(cid);
+
+        if (!cp) {
+            throw new Error(`not found cp > ${cid}`);
+        }
+
 
         // const utoken = cp && cp.userService.users[0] || null;
 

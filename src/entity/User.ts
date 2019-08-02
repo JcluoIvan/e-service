@@ -8,7 +8,7 @@ import {
     Unique,
     BaseEntity,
 } from 'typeorm';
-import logger from '../logger';
+import logger from '../config/logger';
 
 export enum UserRole {
     /* 主管 */

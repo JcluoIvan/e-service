@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as http from 'http';
 import * as socketio from 'socket.io';
-import logger from './logger';
+import logger from './config/logger';
 import * as path from 'path';
 import { config } from 'dotenv';
 import { loadCompanyNamespace } from './services/NamespaceService';
@@ -54,6 +54,7 @@ app.use('/api', routeApi);
 app.use('/img', routeImg);
 
 app.use((err: BaseError, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.error(err);
     if (err instanceof ValidationError) {
         res.status(err.statusCode).send({
             code: err.code,

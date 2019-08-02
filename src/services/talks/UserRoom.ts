@@ -1,4 +1,4 @@
-import ServiceTask from './ServiceTask';
+import TalkService from './CustomerRoom';
 import { EventEmitter } from 'events';
 import * as moment from 'moment';
 import { RoomDisconnectError } from '../../exceptions/center.error';
@@ -8,9 +8,9 @@ import UserToken from '../tokens/UserToken';
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
     (event: 'ready' | 'unready' | 'connect' | 'disconnect' | 'reconnect', listener: () => void): T;
-    (event: 'add-task', listener: (data: { task: ServiceTask }) => void): T;
+    (event: 'add-task', listener: (data: { task: TalkService }) => void): T;
     // tslint:disable-next-line:unified-signatures
-    (event: 'remove-task', listener: (data: { task: ServiceTask }) => void): T;
+    (event: 'remove-task', listener: (data: { task: TalkService }) => void): T;
 }
 
 interface Data {
@@ -18,7 +18,7 @@ interface Data {
     ready: boolean;
 }
 
-export default class ServiceRoom extends EventEmitter {
+export default class RoomService extends EventEmitter {
     public on!: ListenerEvents<this>;
 
     private data: Data;
@@ -59,12 +59,12 @@ export default class ServiceRoom extends EventEmitter {
 
     public ready() {
         this.data.ready = true;
-        this.nsp.emit('center/room-ready', { userId: this.id });
+        this.nsp.emit('talks/room-ready', { userId: this.id });
     }
 
     public unready() {
         this.data.ready = false;
-        this.nsp.emit('center/room-unready', { userId: this.id });
+        this.nsp.emit('talks/room-unready', { userId: this.id });
     }
 
     public toJson(): IUser.Socket.EmitterData.Center.Room {

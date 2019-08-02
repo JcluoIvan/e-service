@@ -1,5 +1,5 @@
 import { responseSuccess, throwError } from '../support';
-import logger from '../logger';
+import logger from '../config/logger';
 import { EventEmitter } from 'events';
 import { Company } from '../entity/Company';
 import CustomerToken, { CustomerData } from './tokens/CustomerToken';

@@ -3,7 +3,7 @@ import { Company } from '../entity/Company';
 import UserService from './UserService';
 import CustomerService from './CustomerService';
 import BaseService from './BaseService';
-import CenterService from './CenterService';
+import CenterService from './talks/TalkService';
 
 interface CompanyItem {
     company: Company;

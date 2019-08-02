@@ -2,6 +2,7 @@ import { SocketUndefinedError } from '../../exceptions/token.error';
 import * as md5 from 'md5';
 import { clearTimeout, setTimeout } from 'timers';
 import { EventEmitter } from 'events';
+import { ipAddress } from '../../support';
 
 export interface CustomerData {
     id: string;
@@ -11,6 +12,7 @@ export interface CustomerData {
 interface Data {
     customer: CustomerData;
     token: string;
+    ip: string;
     socket: ICustomer.Socket | null;
 }
 
@@ -49,6 +51,10 @@ export default class CustomerToken extends EventEmitter {
         return this.data.token;
     }
 
+    get ip() {
+        return this.data.ip;
+    }
+
     get isOnline() {
         return (this.data.socket && this.data.socket.connected) || false;
     }
@@ -59,6 +65,7 @@ export default class CustomerToken extends EventEmitter {
             customer: { ...customer },
             token: generateToken(customer.name),
             socket: null,
+            ip: '',
         };
     }
 
@@ -74,6 +81,7 @@ export default class CustomerToken extends EventEmitter {
             this.clearDestroyTimer();
         }
         this.data.socket = socket;
+        this.data.ip = ipAddress(socket.handshake.address);
     }
 
     public destroy() {

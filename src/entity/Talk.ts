@@ -5,7 +5,7 @@ import * as moment from 'moment';
  * 任務 (顧客加入系統後開始)
  */
 @Entity()
-export class Task extends BaseEntity {
+export class Talk extends BaseEntity {
     @PrimaryGeneratedColumn({
         unsigned: true,
     })

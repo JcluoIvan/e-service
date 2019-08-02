@@ -3,7 +3,7 @@ import { Article } from '../entity/Article';
 import { getConnection } from 'typeorm';
 import { ArticleNotFoundError } from '../exceptions/article.error';
 import { StatusCode } from '../exceptions';
-import logger from '../logger';
+import logger from '../config/logger';
 
 export default class ArticleController extends BaseController {
     public async findAtricle() {

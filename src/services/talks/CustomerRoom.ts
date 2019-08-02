@@ -1,18 +1,18 @@
 import { EventEmitter } from 'events';
-import { Task } from '../../entity/Task';
+import { Talk } from '../../entity/Talk';
 import * as moment from 'moment';
 import * as md5 from 'md5';
 import { Message, MessageType } from '../../entity/Message';
-import { NotInTaskError } from '../../exceptions/center.error';
+import { NotInTalkError } from '../../exceptions/center.error';
 import * as fs from 'fs';
 import * as path from 'path';
 import CustomerToken from '../tokens/CustomerToken';
 import UserToken from '../tokens/UserToken';
 import * as jimp from 'jimp';
-import logger from '../../logger';
+import logger from '../../config/logger';
 import { fileExists } from '../../support/file';
 
-type CacheMessage = IES.TaskCenter.Message;
+type CacheMessage = IES.Talks.Message;
 
 interface Data {
     messages: CacheMessage[];
@@ -41,22 +41,22 @@ const toUserInfo = (utoken: UserToken | null): IUser.Socket.EmitterData.UserInfo
 /**
  * 服務任務
  */
-export default class ServiceTask {
+export default class TalkService {
     /**
      * 建立任務
      * @param ctoken Guest 連線資訊
      */
-    public static async createTask(ctoken: CustomerToken, nsp: IUser.Socket.Namespace) {
+    public static async createTalk(ctoken: CustomerToken, nsp: IUser.Socket.Namespace) {
         const createdAt = moment();
-        const taskEntity = new Task();
-        taskEntity.executiveId = 0;
-        taskEntity.customerId = ctoken.customer.id;
-        taskEntity.customerName = ctoken.customer.name;
-        taskEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
+        const talkEntity = new Talk();
+        talkEntity.executiveId = 0;
+        talkEntity.customerId = ctoken.customer.id;
+        talkEntity.customerName = ctoken.customer.name;
+        talkEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
 
-        const task = await taskEntity.save();
+        const talk = await talkEntity.save();
 
-        return new ServiceTask(ctoken, task, nsp);
+        return new TalkService(ctoken, talk, nsp);
     }
 
     /** 只保留 message 的 n 筆快取 */
@@ -65,11 +65,11 @@ export default class ServiceTask {
     private data: Data;
 
     get id() {
-        return this.task.id;
+        return this.talk.id;
     }
 
     get name() {
-        return this.task.customerName;
+        return this.talk.customerName;
     }
 
     get customer() {
@@ -77,7 +77,7 @@ export default class ServiceTask {
     }
 
     get createdAt() {
-        return this.task.createdAt;
+        return this.talk.createdAt;
     }
 
     get allUsers() {
@@ -90,11 +90,11 @@ export default class ServiceTask {
     }
 
     get isStart() {
-        return this.task.startAt !== null && this.task.closedAt === null;
+        return this.talk.startAt !== null && this.talk.closedAt === null;
     }
 
     get isClosed() {
-        return this.task.closedAt !== null;
+        return this.talk.closedAt !== null;
     }
 
     get isOnline() {
@@ -105,7 +105,7 @@ export default class ServiceTask {
         return this.data.watchers;
     }
 
-    constructor(customer: CustomerToken, private task: Task, private nsp: IUser.Socket.Namespace) {
+    constructor(customer: CustomerToken, private talk: Talk, private nsp: IUser.Socket.Namespace) {
         this.data = {
             /** 對話記錄 */
             messages: [],
@@ -115,7 +115,7 @@ export default class ServiceTask {
             watchers: [],
             disconnectedAt: 0,
         };
-        customer.socket.emit('center/waiting');
+        customer.socket.emit('talks/waiting');
     }
 
     public hasUser(userId: number) {
@@ -129,19 +129,20 @@ export default class ServiceTask {
     public async start(executive: UserToken) {
         const startAt = moment();
         const info = toUserInfo(executive);
-        this.task.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
-        this.task.executiveId = executive.user.id;
-        this.task.closedAt = null;
+        this.talk.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
+        this.talk.executiveId = executive.user.id;
+        this.talk.closedAt = null;
 
-        this.task = await this.task.save();
+        this.talk = await this.talk.save();
         this.data.executive = executive;
-        this.customer.socket.emit('center/start', {
+        this.customer.socket.emit('talks/start', {
             executive: info,
             messages: this.data.messages,
             startAt: moment().valueOf(),
         });
-        executive.socket.nsp.emit('center/task-start', {
-            taskId: this.id,
+        executive.socket.nsp.emit('talks/talk-start', {
+            talkId: this.id,
+            startAt: moment().valueOf(),
             executive: info,
         });
     }
@@ -152,11 +153,11 @@ export default class ServiceTask {
         const user = userId ? this.allUsers.find((u) => u.user.id === userId) : null;
 
         if (userId && !user) {
-            throw new NotInTaskError();
+            throw new NotInTalkError();
         }
 
         const messageEntity = new Message();
-        messageEntity.taskId = this.id;
+        messageEntity.talkId = this.id;
         messageEntity.createdAt = time.format('YYYY-MM-DD HH:mm:ss');
         messageEntity.userId = userId || 0;
 
@@ -179,7 +180,7 @@ export default class ServiceTask {
         const cacheMessage: CacheMessage = {
             id: message.id,
             content: message.getContent(),
-            taskId: message.taskId,
+            talkId: message.talkId,
             time: time.valueOf(),
             type: message.type,
             user: {
@@ -191,9 +192,9 @@ export default class ServiceTask {
 
         this.data.messages = [cacheMessage, ...this.data.messages].slice(0, this.limitMessage);
 
-        this.customer.socket.emit('center/message', cacheMessage);
+        this.customer.socket.emit('talks/message', cacheMessage);
         this.allUsers.forEach((u) => {
-            u.socket.emit('center/message', cacheMessage);
+            u.socket.emit('talks/message', cacheMessage);
         });
         return cacheMessage;
     }
@@ -201,27 +202,27 @@ export default class ServiceTask {
     public joinWatcher(utoken: UserToken) {
         this.data.watchers.push(utoken);
         // const data: ISK.EmitterData.CenterJoin = {
-        //     taskId: this.id,
+        //     talkId: this.id,
         //     user: toUserInfo(utoken),
         // };
-        // utoken.socket.emit('center/join', data);
-        // this.customer.socket.emit('center/join', data);
+        // utoken.socket.emit('talks/join', data);
+        // this.customer.socket.emit('talks/join', data);
         // this.allUsers.forEach((u) => {
-        //     u.socket.emit('center/join', data);
+        //     u.socket.emit('talks/join', data);
         // });
     }
 
     public leaveWatcher(utoken: UserToken) {
         this.data.watchers = this.data.watchers.filter((w) => w.user.id !== utoken.user.id);
         // const data: ISK.EmitterData.CenterLeave = {
-        //     taskId: this.id,
+        //     talkId: this.id,
         //     userId: utoken.user.id,
         // };
-        // utoken.socket.emit('center/leave', data);
+        // utoken.socket.emit('talks/leave', data);
 
-        // this.customer.socket.emit('center/leave', data);
+        // this.customer.socket.emit('talks/leave', data);
         // this.allUsers.forEach((u) => {
-        //     u.socket.emit('center/leave', data);
+        //     u.socket.emit('talks/leave', data);
         // });
     }
     public clearUsers() {
@@ -257,42 +258,44 @@ export default class ServiceTask {
         });
     }
 
-    public toJson(): IES.TaskCenter.Task {
+    public toJson(): IES.Talks.Talk {
         return {
             id: this.id,
             name: this.name,
+            ip: this.customer.ip,
             online: this.customer.isOnline,
             executive: toUserInfo(this.executive),
-            startAt: this.task.intStartAt,
-            createdAt: this.task.intCreatedAt,
+            startAt: this.talk.intStartAt,
+            createdAt: this.talk.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
-            closedAt: this.task.intClosedAt,
+            closedAt: this.talk.intClosedAt,
         };
     }
 
-    public toJsonDetail(utoken?: UserToken): IES.TaskCenter.TaskDetail {
+    public toJsonDetail(utoken?: UserToken): IES.Talks.TalkDetail {
         const watchers = (utoken && this.data.watchers.filter((w) => w.user.id === utoken.user.id)) || [];
         return {
             id: this.id,
             name: this.name,
+            ip: this.customer.ip,
             online: this.customer.isOnline,
             executive: toUserInfo(this.executive),
-            startAt: this.task.intStartAt,
-            createdAt: this.task.intCreatedAt,
+            startAt: this.talk.intStartAt,
+            createdAt: this.talk.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
-            closedAt: this.task.intClosedAt,
+            closedAt: this.talk.intClosedAt,
             watchers: watchers.map(toUserInfo),
             messages: this.data.messages,
         };
     }
-    public toJsonForCustomer(): IES.TaskCenter.TaskForCustomer {
+    public toJsonForCustomer(): IES.Talks.TalkForCustomer {
         return {
             id: this.id,
             name: this.name,
             online: this.customer.isOnline,
             executive: toUserInfo(this.executive),
-            startAt: this.task.intStartAt,
-            createdAt: this.task.intCreatedAt,
+            startAt: this.talk.intStartAt,
+            createdAt: this.talk.intCreatedAt,
             messages: this.data.messages,
         };
     }
@@ -300,9 +303,9 @@ export default class ServiceTask {
     public onReconnected() {
         this.data.disconnectedAt = 0;
 
-        this.customer.socket.emit('center/task', this.toJsonForCustomer());
+        this.customer.socket.emit('talks/talk', this.toJsonForCustomer());
 
-        this.nsp.emit('center/task-online', { taskId: this.id });
+        this.nsp.emit('talks/talk-online', { talkId: this.id });
     }
 
     /**
@@ -311,26 +314,26 @@ export default class ServiceTask {
     public onDisconnected() {
         const disconnectedAt = moment().valueOf();
         this.data.disconnectedAt = disconnectedAt;
-        this.nsp.emit('center/task-offline', { taskId: this.id, disconnectedAt });
+        this.nsp.emit('talks/talk-offline', { talkId: this.id, disconnectedAt });
     }
 
     public async close() {
-        if (this.task.startAt) {
+        if (this.talk.startAt) {
             const closedAt = moment();
-            this.task.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
-            this.task = await this.task.save();
+            this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
+            this.talk = await this.talk.save();
             this.data.executive = null;
-            this.nsp.emit('center/task-closed', { taskId: this.id, closedAt: closedAt.valueOf() });
+            this.nsp.emit('talks/talk-closed', { talkId: this.id, closedAt: closedAt.valueOf() });
         } else {
-            const taskId = this.id;
+            const talkId = this.id;
             /** 移除未開啟服務的 task */
-            await this.task.remove();
-            this.nsp.emit('center/task-discard', { taskId });
+            await this.talk.remove();
+            this.nsp.emit('talks/talk-discard', { talkId });
         }
     }
 
     public updateExecutive() {
         logger.info('update executive');
-        this.nsp.emit('center/task-executive', { taskId: this.id, executive: toUserInfo(this.executive) });
+        this.nsp.emit('talks/talk-executive', { talkId: this.id, executive: toUserInfo(this.executive) });
     }
 }

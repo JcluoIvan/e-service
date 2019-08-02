@@ -1,12 +1,12 @@
 import { BaseError } from '.';
 
-export class TaskNotFoundError extends BaseError {
-    public message = 'task not found';
+export class TalkNotFoundError extends BaseError {
+    public message = 'talk not found';
 }
 
 // tslint:disable-next-line:max-classes-per-file
-export class NotInTaskError extends BaseError {
-    public message = 'you are not in this task';
+export class NotInTalkError extends BaseError {
+    public message = 'you are not in this talk';
 }
 
 // tslint:disable-next-line:max-classes-per-file
