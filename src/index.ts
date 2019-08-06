@@ -10,6 +10,7 @@ import routeApi from './routes/api';
 import routeImg from './routes/img';
 import { BaseError, ResponseCode } from './exceptions';
 import { ValidationError } from './exceptions/validation.error';
+import { Article } from './entity/Article';
 config();
 
 logger.info('msg = ', process.env.MESSAGE);

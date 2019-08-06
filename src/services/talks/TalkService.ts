@@ -9,6 +9,9 @@ import { TalkNotFoundError, NotInTalkError } from '../../exceptions/center.error
 import CustomerToken from '../tokens/CustomerToken';
 import UserToken from '../tokens/UserToken';
 import BaseService from '../BaseService';
+import { eventArticle } from '../../events/event-article';
+import { getConnection } from 'typeorm';
+import { Article, AutoSend } from '../../entity/Article';
 
 enum Mode {
     /* 平均 */
@@ -25,14 +28,15 @@ export default class CenterService extends BaseService {
 
     private mapRooms = new Map<number, RoomService>();
 
-    private mapCustomer = new Set<string>();
-
     private setting: { mode: Mode; max: number } = {
         mode: Mode.Loop,
         max: 1,
     };
 
     private loopQueues: RoomService[] = [];
+
+    private autoSendConnecteds: string[] = [];
+    private autoSendStarts: string[] = [];
 
     get rooms() {
         return Array.from(this.mapRooms.values());
@@ -55,6 +59,27 @@ export default class CenterService extends BaseService {
 
         /* 成員登入 */
         userService.on('connect', ({ utoken }) => this.onUserConnected(utoken));
+
+        eventArticle.on('save.after', async (article) => {
+            if (article.companyId !== userService.company.id) {
+                return;
+            }
+            this.updateAutoSend();
+        });
+        this.updateAutoSend();
+    }
+    private async updateAutoSend() {
+        const rows = await getConnection()
+            .createQueryBuilder(Article, 'article')
+            .select('article.content')
+            .addSelect('article.auto_send')
+            .where('auto_send IN (:...autoSend) and company_id = :companyId', {
+                autoSend: ['connected', 'start'],
+                companyId: this.userService.company.id,
+            })
+            .getMany();
+        this.autoSendConnecteds = rows.filter((r) => r.autoSend === AutoSend.Connected).map((r) => r.content);
+        this.autoSendStarts = rows.filter((r) => r.autoSend === AutoSend.Start).map((r) => r.content);
     }
 
     private getTalk(talkId: number) {
@@ -91,15 +116,6 @@ export default class CenterService extends BaseService {
             talk.onDisconnected();
         });
 
-        if (!this.mapCustomer.has(ctoken.token)) {
-            this.mapCustomer.add(ctoken.token);
-            ctoken.on('destroy', () => {
-                talk.close();
-                this.mapTalks.delete(talk.id);
-                this.mapCustomer.delete(ctoken.token);
-            });
-        }
-
         this.updateTalk(talk);
         this.dispatchTalk();
     }
@@ -112,7 +128,6 @@ export default class CenterService extends BaseService {
     private async onUserConnected(utoken: UserToken) {
         /* 建立房間 */
         const sroom = await this.findOrGenerateRoom(utoken);
-
         this.updateTalks(utoken.socket);
         this.updateRooms(utoken.socket);
         this.updateWatchers(utoken, true);
@@ -144,6 +159,13 @@ export default class CenterService extends BaseService {
                 }
             } catch (err) {
                 utoken.socket.emit('message/error', err.message);
+            }
+        });
+
+        utoken.socket.on('talks/talk-close', (data) => {
+            const talk = this.mapTalks.get(data.talkId);
+            if (talk && talk.executive && talk.executive.user.id === utoken.user.id) {
+                talk.close();
             }
         });
 
@@ -187,6 +209,10 @@ export default class CenterService extends BaseService {
         }
 
         const talk = await TalkService.createTalk(ctoken, this.userService.nsp);
+        // talk.sendMessage()
+        talk.on('close', () => {
+            this.mapTalks.delete(talk.id);
+        });
         this.mapTalks.set(talk.id, talk);
         return talk;
     }

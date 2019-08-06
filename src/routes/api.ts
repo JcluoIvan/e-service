@@ -16,6 +16,8 @@ router.get('/articles/:id', handleArticle(async (ctrl) => await ctrl.findAtricle
 
 router.post('/articles/:id/save', handleArticle(async (ctrl) => await ctrl.saveArticle()));
 
+router.post('/articles/:id/update-auto-send', handleArticle(async (ctrl) => await ctrl.updateAutoSend()));
+
 router.post('/articles/:id/delete', handleArticle(async (ctrl) => ctrl.deleteArticle()));
 
 const handleUser = handlerController(UserController);

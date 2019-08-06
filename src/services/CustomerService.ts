@@ -60,16 +60,13 @@ export default class CustomerService extends EventEmitter {
     }
 
     public async findOrGenerateCustomerToken(cdata: CustomerData, token: string) {
-        if (token) {
-            const find = this.customers.find((c) => !c.isOnline && c.token === token);
-
-            if (find) {
-                return find;
-            }
+        // const find = this.customers.find((c) => !c.isOnline && c.token === token);
+        const find = this.data.mapCustomers.get(token);
+        if (find) {
+            return find;
         }
-        logger.warn(token, this.customers.map((o) => o.token));
 
-        const ctoken = new CustomerToken(cdata);
+        const ctoken = new CustomerToken(cdata, token || null);
         this.data.mapCustomers.set(ctoken.token, ctoken);
         ctoken.on('destroy', () => {
             this.data.mapCustomers.delete(ctoken.token);

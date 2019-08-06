@@ -11,8 +11,15 @@ import UserToken from '../tokens/UserToken';
 import * as jimp from 'jimp';
 import logger from '../../config/logger';
 import { fileExists } from '../../support/file';
+import { setTimeout, clearTimeout } from 'timers';
+
+interface ListenerEvents<T> {
+    (event: string | symbol, listener: (...args: any[]) => void): T;
+    (event: 'close', listener: void): T;
+}
 
 type CacheMessage = IES.Talks.Message;
+const CLOSE_DELAY = 10 * 1000;
 
 interface Data {
     messages: CacheMessage[];
@@ -20,6 +27,7 @@ interface Data {
     customer: CustomerToken;
     watchers: UserToken[];
     disconnectedAt: number;
+    destroyTimer: NodeJS.Timeout | null;
 }
 
 const toUserInfo = (utoken: UserToken | null): IUser.Socket.EmitterData.UserInfo => {
@@ -41,29 +49,7 @@ const toUserInfo = (utoken: UserToken | null): IUser.Socket.EmitterData.UserInfo
 /**
  * 服務任務
  */
-export default class TalkService {
-    /**
-     * 建立任務
-     * @param ctoken Guest 連線資訊
-     */
-    public static async createTalk(ctoken: CustomerToken, nsp: IUser.Socket.Namespace) {
-        const createdAt = moment();
-        const talkEntity = new Talk();
-        talkEntity.executiveId = 0;
-        talkEntity.customerId = ctoken.customer.id;
-        talkEntity.customerName = ctoken.customer.name;
-        talkEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
-
-        const talk = await talkEntity.save();
-
-        return new TalkService(ctoken, talk, nsp);
-    }
-
-    /** 只保留 message 的 n 筆快取 */
-    private readonly limitMessage = 10;
-
-    private data: Data;
-
+export default class TalkService extends EventEmitter {
     get id() {
         return this.talk.id;
     }
@@ -104,8 +90,32 @@ export default class TalkService {
     get watchers() {
         return this.data.watchers;
     }
+    /**
+     * 建立任務
+     * @param ctoken Guest 連線資訊
+     */
+    public static async createTalk(ctoken: CustomerToken, nsp: IUser.Socket.Namespace) {
+        const createdAt = moment();
+        const talkEntity = new Talk();
+        talkEntity.executiveId = 0;
+        talkEntity.customerId = ctoken.customer.id;
+        talkEntity.customerName = ctoken.customer.name;
+        talkEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
+
+        const talk = await talkEntity.save();
+
+        return new TalkService(ctoken, talk, nsp);
+    }
+
+    public on!: ListenerEvents<this>;
+
+    /** 只保留 message 的 n 筆快取 */
+    private readonly limitMessage = 10;
+
+    private data: Data;
 
     constructor(customer: CustomerToken, private talk: Talk, private nsp: IUser.Socket.Namespace) {
+        super();
         this.data = {
             /** 對話記錄 */
             messages: [],
@@ -114,6 +124,7 @@ export default class TalkService {
             executive: null,
             watchers: [],
             disconnectedAt: 0,
+            destroyTimer: null,
         };
         customer.socket.emit('talks/waiting');
     }
@@ -302,9 +313,8 @@ export default class TalkService {
 
     public onReconnected() {
         this.data.disconnectedAt = 0;
-
+        this.clearDestroyTimer();
         this.customer.socket.emit('talks/talk', this.toJsonForCustomer());
-
         this.nsp.emit('talks/talk-online', { talkId: this.id });
     }
 
@@ -315,9 +325,12 @@ export default class TalkService {
         const disconnectedAt = moment().valueOf();
         this.data.disconnectedAt = disconnectedAt;
         this.nsp.emit('talks/talk-offline', { talkId: this.id, disconnectedAt });
+        this.clearDestroyTimer();
+        this.data.destroyTimer = setTimeout(() => this.close(), CLOSE_DELAY);
     }
 
     public async close() {
+        const clostAt = this.data.disconnectedAt ? moment(this.data.disconnectedAt) : moment();
         if (this.talk.startAt) {
             const closedAt = moment();
             this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
@@ -327,13 +340,23 @@ export default class TalkService {
         } else {
             const talkId = this.id;
             /** 移除未開啟服務的 task */
+
             await this.talk.remove();
             this.nsp.emit('talks/talk-discard', { talkId });
         }
+        this.customer.socket.disconnect();
+        this.emit('close');
     }
 
     public updateExecutive() {
         logger.info('update executive');
         this.nsp.emit('talks/talk-executive', { talkId: this.id, executive: toUserInfo(this.executive) });
+    }
+
+    private clearDestroyTimer() {
+        if (this.data.destroyTimer) {
+            clearTimeout(this.data.destroyTimer);
+            this.data.destroyTimer = null;
+        }
     }
 }

@@ -114,10 +114,7 @@ declare namespace ISK {
         (event: 'disconnect'): T;
 
         /** 收到訊息 */
-        (
-            event: 'talks/send',
-            listener: ListenerHandle<ListenerData.Message.Request, ListenerData.Message.Response>,
-        ): T;
+        (event: 'talks/send', listener: ListenerHandle<ListenerData.Message.Request, ListenerData.Message.Response>): T;
     }
 }
 
@@ -154,8 +151,9 @@ declare namespace IUser {
         namespace ListenerData {
             namespace Login {
                 interface Request {
-                    username: string;
-                    password: string;
+                    username?: string;
+                    password?: string;
+                    token?: string;
                 }
                 interface Response {
                     id: number;
@@ -170,7 +168,6 @@ declare namespace IUser {
             }
 
             namespace Article {
-
                 interface Save {
                     id: number;
                     key: string;
@@ -183,7 +180,7 @@ declare namespace IUser {
         interface Emitter extends ISK.Emitter {
             // (event: 'firm', data: { id: number; name: string }): boolean;
             /** 重新連線 */
-            (event: 'login', data: ListenerData.Login.Response): boolean;
+            // (event: 'login', data: ListenerData.Login.Response): boolean;
 
             (event: 'message/error', data: { message: string }): boolean;
 
@@ -247,6 +244,7 @@ declare namespace IUser {
         }
 
         interface Listener<T = any> extends ISK.Listener<T, Socket> {
+
             (event: 'login', listener: ISK.ListenerHandle<ListenerData.Login.Request, ListenerData.Login.Response>): T;
 
             // (event: 'customer/join', listener: (data: { id?: string; name: string }, response: () => void) => void): T;
@@ -266,6 +264,9 @@ declare namespace IUser {
             /** 查詢所有房間 */
             (event: 'talks/rooms', listener: ISK.ListenerHandle): T;
 
+            /** 關閉對話 */
+            (event: 'talks/talk-close', listener: ISK.ListenerHandle<{ talkId: number }>): boolean;
+
             /** 開啟 */
             (event: 'talks/room-ready'): T;
 
@@ -276,7 +277,6 @@ declare namespace IUser {
             (event: 'article/save', listener: ISK.ListenerHandle<ListenerData.Article.Save>): T;
             (event: 'article/remove', listener: ISK.ListenerHandle<number>): T;
         }
-
 
         interface Namespace extends SocketIO.Namespace {
             on: Listener<this>;

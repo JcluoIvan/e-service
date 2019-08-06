@@ -7,6 +7,7 @@ import { EventEmitter } from 'events';
 import UserToken from './tokens/UserToken';
 import { Company } from '../entity/Company';
 import * as moment from 'moment';
+import { ResponseCode } from '../exceptions';
 
 // interface EmitterEvents {
 //     (event: string | symbol, ...args: any[]): boolean;
@@ -59,38 +60,11 @@ export default class UserService extends EventEmitter {
         };
 
         nsp.on('connect', async (socket: IUser.Socket) => {
-            try {
-                const token = socket.handshake.query.token || '';
-                if (token) {
-                    const utoken = await this.reconnect(token, socket);
-                    if (utoken) {
-                        socket.emit('login', {
-                            id: utoken.user.id,
-                            username: utoken.user.username,
-                            companyId: utoken.user.companyId,
-                            imageUrl: utoken.user.imageUrl,
-                            name: utoken.user.name,
-                            role: utoken.user.role,
-                            token: utoken.token,
-                            loginAt: moment().format('YYYY-MM-DD HH:mm:ss'),
-                        });
-                        this.emit('connect', { utoken });
-                    }
-                }
-            } catch (err) {
-                logger.error(err);
-            }
-
-            socket.on('login', async ({ username, password }, res) => {
+            socket.on('login', async ({ username, password, token }, res) => {
                 logger.info('login');
 
                 try {
-                    const utoken = await this.findOrGenerateUserToken(username);
-                    const isLogin = await utoken.login(socket, password);
-                    if (!isLogin) {
-                        res(throwError(new LoginFailedError()));
-                        return;
-                    }
+                    const utoken = await this.findUserToken(socket, { username, password, token });
 
                     const resData: IUser.Socket.ListenerData.Login.Response = {
                         id: utoken.user.id,
@@ -105,7 +79,7 @@ export default class UserService extends EventEmitter {
                     res(responseSuccess(resData));
                     this.emit('connect', { utoken });
                 } catch (err) {
-                    logger.error(`Error: ${err.message}`);
+                    logger.error(`Error: ${err.message}`, err);
                     res(throwError(err));
                 }
             });
@@ -120,32 +94,35 @@ export default class UserService extends EventEmitter {
         return this.users.find((u) => u.token === token) || null;
     }
 
-    private async reconnect(token: string, socket: IUser.Socket) {
-        const utoken = Array.from(this.users.values()).find((u) => u.token === token);
-        if (!utoken) {
-            return false;
-        }
-        const res = await utoken.reconnect(socket, token);
-        return res ? utoken : false;
-    }
+    private async findUserToken(socket: IUser.Socket, data: { username?: string; password?: string; token?: string }) {
+        if (data.username) {
+            const user = await findByUsername(this.company.id, data.username);
+            if (!user) {
+                throw new LoginFailedError();
+            }
+            /** remove old UserToken data */
+            const findOld = this.data.users.get(user.id);
+            if (findOld) {
+                findOld.logout().destroy();
+            }
 
-    private async findOrGenerateUserToken(username: string) {
-        const find = this.users.find((u) => u.user.username === username);
-        if (find) {
-            return find;
+            const utoken = new UserToken(socket, user);
+            utoken.on('destroy', () => {
+                this.data.users.delete(user.id);
+            });
+            this.data.users.set(user.id, utoken);
+            return utoken;
         }
 
-        const user = await findByUsername(this.company.id, username);
-        if (!user) {
-            throw new LoginFailedError();
+        if (data.token) {
+            const utoken = this.users.find((u) => u.token === data.token);
+            if (!utoken) {
+                throw new LoginFailedError();
+            }
+            await utoken.reconnect(socket, data.token);
+            return utoken;
         }
 
-        const utoken = new UserToken(user);
-        this.data.users.set(user.id, utoken);
-        utoken.on('destroy', () => {
-            console.info('destroy');
-            this.data.users.delete(user.id);
-        });
-        return utoken;
+        throw new LoginFailedError();
     }
 }

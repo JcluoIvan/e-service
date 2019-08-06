@@ -10,11 +10,14 @@ export enum StatusCode {
 export enum ResponseCode {
     Success = 0,
     UnknownError = 1,
-    Validation = 2,
     /* 404 */
     ResourceNotFound = 3,
     /* 405 */
     MethodNotAllowed = 4,
+
+    Validation = 40001,
+
+    NoLogin = 40101,
 }
 
 export class BaseError extends Error {

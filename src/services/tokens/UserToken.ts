@@ -32,12 +32,12 @@ export default class UserToken extends EventEmitter {
     private data!: Data;
     private destroyTimes: NodeJS.Timer | null = null;
 
-    constructor(user: User) {
+    constructor(socket: IUser.Socket, user: User) {
         super();
         this.data = {
             user,
-            socket: null,
-            token: null,
+            socket,
+            token: this.generateToken(user),
         };
     }
 
@@ -60,29 +60,30 @@ export default class UserToken extends EventEmitter {
         return this.data.token;
     }
 
-    public async login(socket: IUser.Socket, password: string) {
-        await this.data.user.reload();
+    // public async login(socket: IUser.Socket, password: string) {
+    //     await this.data.user.reload();
 
-        if (!this.user.checkPassword(password)) {
-            throw new LoginFailedError();
-        }
+    //     if (!this.user.checkPassword(password)) {
+    //         throw new LoginFailedError();
+    //     }
 
-        if (this.isOnline) {
-            this.socket.emit('message/error', { message: '重複登入' });
-            this.socket.disconnect();
-        }
-        this.data.socket = socket;
+    //     if (this.isOnline) {
+    //         this.socket.emit('message/error', { message: '重複登入' });
+    //         this.socket.disconnect();
+    //     }
+    //     this.data.socket = socket;
 
-        this.generateToken();
-        this.onConnected();
+    //     this.generateToken();
+    //     this.onConnected();
 
-        this.emit('connected');
-        this.clearDestroyTime();
-        return this.token;
-    }
+    //     this.emit('connected');
+    //     this.clearDestroyTime();
+    //     return this.token;
+    // }
 
     public async reconnect(socket: IUser.Socket, token: string) {
         if (token && token !== this.data.token) {
+            logger.error('error token');
             return false;
         }
 
@@ -104,6 +105,7 @@ export default class UserToken extends EventEmitter {
     public logout() {
         this.data.token = null;
         this.socket.disconnect();
+        return this;
     }
 
     public destroy() {
@@ -129,9 +131,8 @@ export default class UserToken extends EventEmitter {
         this.socket.on('disconnect', () => this.onDisconnected());
     }
 
-    private generateToken() {
-        this.data.token = md5(`${new Date().getTime()}:${this.user.id}:${this.user.username}`);
-        return this.data.token;
+    private generateToken(user: User) {
+        return md5(`${new Date().getTime()}:${user.id}:${user.username}`);
     }
 
     private clearDestroyTime() {

@@ -59,11 +59,11 @@ export default class CustomerToken extends EventEmitter {
         return (this.data.socket && this.data.socket.connected) || false;
     }
 
-    constructor(customer: CustomerData) {
+    constructor(customer: CustomerData, token: string | null) {
         super();
         this.data = {
             customer: { ...customer },
-            token: generateToken(customer.name),
+            token: token || generateToken(customer.name),
             socket: null,
             ip: '',
         };

@@ -9,6 +9,12 @@ import {
     BaseEntity,
 } from 'typeorm';
 
+export enum AutoSend {
+    None = 'none',
+    Connected = 'connected',
+    Start = 'start',
+}
+
 @Entity()
 export class Article extends BaseEntity {
     @PrimaryGeneratedColumn({
@@ -47,6 +53,14 @@ export class Article extends BaseEntity {
         length: 200,
     })
     public content!: string;
+
+    @Column({
+        name: 'auto_send',
+        type: 'enum',
+        enum: AutoSend,
+        default: AutoSend.None,
+    })
+    public autoSend!: AutoSend;
 
     @CreateDateColumn({
         name: 'updated_at',
