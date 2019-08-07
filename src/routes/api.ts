@@ -3,6 +3,7 @@ import ArticleController from '../controllers/ArticleController';
 import logger from '../config/logger';
 import { handlerController } from '../controllers/BaseController';
 import UserController from '../controllers/UserController';
+import TalkController from '../controllers/TalkController';
 
 const router = Router();
 
@@ -27,5 +28,8 @@ router.get('/users', handleUser(async (ctrl) => await ctrl.listUser()));
 router.get('/users/:id', handleUser(async (ctrl) => await ctrl.findUser()));
 
 router.post('/users/:id/save', handleUser(async (ctrl) => await ctrl.saveUser()));
+
+const handleTalk = handlerController(TalkController);
+router.get('/talks', handleTalk(async (ctrl) => await ctrl.listTalks()));
 
 export default router;

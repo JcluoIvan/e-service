@@ -1,7 +1,7 @@
 import UserService from '../UserService';
 import CustomerService from '../CustomerService';
 import logger from '../../config/logger';
-import TalkService from './CustomerRoom';
+import CustomerRoom from './CustomerRoom';
 import RoomService from './UserRoom';
 import { UserRole, User } from '../../entity/User';
 import { throwError, responseSuccess } from '../../support';
@@ -12,6 +12,7 @@ import BaseService from '../BaseService';
 import { eventArticle } from '../../events/event-article';
 import { getConnection } from 'typeorm';
 import { Article, AutoSend } from '../../entity/Article';
+import { FromType } from '../../entity/Message';
 
 enum Mode {
     /* 平均 */
@@ -24,7 +25,7 @@ enum Mode {
  * 服務中心
  */
 export default class CenterService extends BaseService {
-    private mapTalks = new Map<number, TalkService>();
+    private mapTalks = new Map<number, CustomerRoom>();
 
     private mapRooms = new Map<number, RoomService>();
 
@@ -36,6 +37,7 @@ export default class CenterService extends BaseService {
     private loopQueues: RoomService[] = [];
 
     private autoSendConnecteds: string[] = [];
+
     private autoSendStarts: string[] = [];
 
     get rooms() {
@@ -68,16 +70,19 @@ export default class CenterService extends BaseService {
         });
         this.updateAutoSend();
     }
+
     private async updateAutoSend() {
         const rows = await getConnection()
             .createQueryBuilder(Article, 'article')
             .select('article.content')
-            .addSelect('article.auto_send')
+            .addSelect('article.autoSend')
             .where('auto_send IN (:...autoSend) and company_id = :companyId', {
                 autoSend: ['connected', 'start'],
                 companyId: this.userService.company.id,
             })
             .getMany();
+        logger.warn(rows);
+
         this.autoSendConnecteds = rows.filter((r) => r.autoSend === AutoSend.Connected).map((r) => r.content);
         this.autoSendStarts = rows.filter((r) => r.autoSend === AutoSend.Start).map((r) => r.content);
     }
@@ -108,7 +113,7 @@ export default class CenterService extends BaseService {
 
         /** 發送訊息 */
         ctoken.socket.on('talks/send', async (data, res) => {
-            const { id, content, time } = await talk.sendMessage(data);
+            const { id, content, time } = await talk.sendMessage(data, { type: FromType.Customer });
             res(responseSuccess({ id, content, time }));
         });
 
@@ -142,7 +147,10 @@ export default class CenterService extends BaseService {
         utoken.socket.on('talks/send', async (data, res) => {
             try {
                 const talk = this.getTalk(data.talkId);
-                const { id, content, time } = await talk.sendMessage(data, utoken.user.id);
+                const { id, content, time } = await talk.sendMessage(data, {
+                    type: FromType.Service,
+                    userId: utoken.user.id,
+                });
                 res(responseSuccess({ id, content, time }));
             } catch (err) {
                 res(throwError(err));
@@ -156,9 +164,24 @@ export default class CenterService extends BaseService {
                 const talk = talkId ? this.getTalk(talkId) : this.talkQueues[0];
                 if (talk) {
                     talk.start(utoken);
+
+                    /** 對話開始後系統發送 start 類型文章  */
+                    this.autoSendStarts.forEach((message) => {
+                        talk.sendMessage({ content: message, type: 'text/plain' }, { type: FromType.System });
+                    });
                 }
             } catch (err) {
                 utoken.socket.emit('message/error', err.message);
+            }
+        });
+
+        utoken.socket.on('talks/check-messages', async (data, res) => {
+            try {
+                const talk = this.getTalk(data.talkId);
+                const messages = talk.messages.filter((m) => m.id > data.lastMessageId);
+                res(responseSuccess(messages));
+            } catch (err) {
+                res(throwError(err));
             }
         });
 
@@ -202,18 +225,23 @@ export default class CenterService extends BaseService {
         });
     }
     private async findOrCreateTalk(ctoken: CustomerToken) {
-        const find = this.talks.find((t) => t.customer.token === ctoken.token);
+        const find = this.talks.find((t) => t.cutoken.customer.id === ctoken.customer.id);
         if (find) {
             find.onReconnected();
             return find;
         }
 
-        const talk = await TalkService.createTalk(ctoken, this.userService.nsp);
-        // talk.sendMessage()
+        const talk = await CustomerRoom.createTalk(ctoken, this.userService.nsp);
         talk.on('close', () => {
             this.mapTalks.delete(talk.id);
         });
         this.mapTalks.set(talk.id, talk);
+
+        /* 訪客連線後系統發送 connected 類型文章 */
+        this.autoSendConnecteds.forEach((message) => {
+            talk.sendMessage({ content: message, type: 'text/plain' }, { type: FromType.System });
+        });
+
         return talk;
     }
 
@@ -246,7 +274,7 @@ export default class CenterService extends BaseService {
         socket.emit('talks/talks', this.talks.map((t) => t.toJson()));
     }
 
-    private updateTalk(talk: TalkService) {
+    private updateTalk(talk: CustomerRoom) {
         this.userService.nsp.emit('talks/talk', talk.toJson());
     }
 

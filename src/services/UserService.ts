@@ -95,15 +95,16 @@ export default class UserService extends EventEmitter {
     }
 
     private async findUserToken(socket: IUser.Socket, data: { username?: string; password?: string; token?: string }) {
-        if (data.username) {
+        if (data.username && data.password) {
+            const find = this.users.find((u) => u.user.username === data.username);
+            if (find) {
+                await find.login(socket, data.password);
+                return find;
+            }
+
             const user = await findByUsername(this.company.id, data.username);
             if (!user) {
                 throw new LoginFailedError();
-            }
-            /** remove old UserToken data */
-            const findOld = this.data.users.get(user.id);
-            if (findOld) {
-                findOld.logout().destroy();
             }
 
             const utoken = new UserToken(socket, user);

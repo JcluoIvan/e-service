@@ -1,4 +1,4 @@
-import TalkService from './CustomerRoom';
+import CustomerRoom from './CustomerRoom';
 import { EventEmitter } from 'events';
 import * as moment from 'moment';
 import { RoomDisconnectError } from '../../exceptions/center.error';
@@ -8,9 +8,6 @@ import UserToken from '../tokens/UserToken';
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
     (event: 'ready' | 'unready' | 'connect' | 'disconnect' | 'reconnect', listener: () => void): T;
-    (event: 'add-task', listener: (data: { task: TalkService }) => void): T;
-    // tslint:disable-next-line:unified-signatures
-    (event: 'remove-task', listener: (data: { task: TalkService }) => void): T;
 }
 
 interface Data {

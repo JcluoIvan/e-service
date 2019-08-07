@@ -6,8 +6,8 @@
     "scripts": {
         "watch": "gulp default",
         "start": "supervisor -w dist dist/index",
-        "generate-db": "node build/migration-generate",
-        "run-db": "typeorm migration:run",
+        "g-db": "node build/migration-generate",
+        "r-db": "typeorm migration:run",
         "customer-dev": "webpack-dev-server --config build/webpack.config.js --open",
         "test": "echo \"Error: no test specified\" && exit 1"
     },

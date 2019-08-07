@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
-import { Talk } from '../../entity/Talk';
+import { Talk, TalkStatus } from '../../entity/Talk';
 import * as moment from 'moment';
 import * as md5 from 'md5';
-import { Message, MessageType } from '../../entity/Message';
+import { Message, MessageType, FromType } from '../../entity/Message';
 import { NotInTalkError } from '../../exceptions/center.error';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -17,9 +17,13 @@ interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
     (event: 'close', listener: void): T;
 }
-
 type CacheMessage = IES.Talks.Message;
 const CLOSE_DELAY = 10 * 1000;
+
+interface SendMessageData {
+    content: string;
+    type: 'text/plain' | 'image/jpeg' | 'image/png';
+}
 
 interface Data {
     messages: CacheMessage[];
@@ -49,16 +53,12 @@ const toUserInfo = (utoken: UserToken | null): IUser.Socket.EmitterData.UserInfo
 /**
  * 服務任務
  */
-export default class TalkService extends EventEmitter {
+export default class CustomerRoom extends EventEmitter {
     get id() {
         return this.talk.id;
     }
 
-    get name() {
-        return this.talk.customerName;
-    }
-
-    get customer() {
+    get cutoken() {
         return this.data.customer;
     }
 
@@ -75,6 +75,10 @@ export default class TalkService extends EventEmitter {
         return this.data.executive;
     }
 
+    get messages() {
+        return this.data.messages;
+    }
+
     get isStart() {
         return this.talk.startAt !== null && this.talk.closedAt === null;
     }
@@ -84,7 +88,7 @@ export default class TalkService extends EventEmitter {
     }
 
     get isOnline() {
-        return this.customer.isOnline;
+        return this.cutoken.isOnline;
     }
 
     get watchers() {
@@ -98,13 +102,15 @@ export default class TalkService extends EventEmitter {
         const createdAt = moment();
         const talkEntity = new Talk();
         talkEntity.executiveId = 0;
+        talkEntity.companyId = ctoken.customer.companyId;
         talkEntity.customerId = ctoken.customer.id;
-        talkEntity.customerName = ctoken.customer.name;
+        talkEntity.ip = ctoken.ip;
+        talkEntity.status = TalkStatus.Waiting;
         talkEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
 
         const talk = await talkEntity.save();
 
-        return new TalkService(ctoken, talk, nsp);
+        return new CustomerRoom(ctoken, talk, nsp);
     }
 
     public on!: ListenerEvents<this>;
@@ -142,11 +148,12 @@ export default class TalkService extends EventEmitter {
         const info = toUserInfo(executive);
         this.talk.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
         this.talk.executiveId = executive.user.id;
+        this.talk.status = TalkStatus.Start;
         this.talk.closedAt = null;
 
         this.talk = await this.talk.save();
         this.data.executive = executive;
-        this.customer.socket.emit('talks/start', {
+        this.cutoken.socket.emit('talks/start', {
             executive: info,
             messages: this.data.messages,
             startAt: moment().valueOf(),
@@ -154,23 +161,25 @@ export default class TalkService extends EventEmitter {
         executive.socket.nsp.emit('talks/talk-start', {
             talkId: this.id,
             startAt: moment().valueOf(),
+            status: this.talk.status,
             executive: info,
         });
     }
 
-    public async sendMessage(data: ISK.ListenerData.Message.Request, userId?: number) {
+    public async sendMessage(data: SendMessageData, from: { type: FromType; userId?: number }) {
         const time = moment();
+        const isFromUser = from.type === FromType.Service;
 
-        const user = userId ? this.allUsers.find((u) => u.user.id === userId) : null;
-
-        if (userId && !user) {
+        const user = isFromUser ? this.allUsers.find((u) => u.user.id === from.userId) : null;
+        if (isFromUser && !user) {
             throw new NotInTalkError();
         }
 
         const messageEntity = new Message();
         messageEntity.talkId = this.id;
+        messageEntity.fromType = from.type;
         messageEntity.createdAt = time.format('YYYY-MM-DD HH:mm:ss');
-        messageEntity.userId = userId || 0;
+        messageEntity.userId = from.userId || 0;
 
         switch (data.type) {
             case 'image/jpeg':
@@ -192,6 +201,7 @@ export default class TalkService extends EventEmitter {
             id: message.id,
             content: message.getContent(),
             talkId: message.talkId,
+            fromType: from.type,
             time: time.valueOf(),
             type: message.type,
             user: {
@@ -203,7 +213,7 @@ export default class TalkService extends EventEmitter {
 
         this.data.messages = [cacheMessage, ...this.data.messages].slice(0, this.limitMessage);
 
-        this.customer.socket.emit('talks/message', cacheMessage);
+        this.cutoken.socket.emit('talks/message', cacheMessage);
         this.allUsers.forEach((u) => {
             u.socket.emit('talks/message', cacheMessage);
         });
@@ -272,9 +282,10 @@ export default class TalkService extends EventEmitter {
     public toJson(): IES.Talks.Talk {
         return {
             id: this.id,
-            name: this.name,
-            ip: this.customer.ip,
-            online: this.customer.isOnline,
+            name: this.cutoken.customer.name,
+            ip: this.cutoken.ip,
+            online: this.cutoken.isOnline,
+            status: this.talk.status,
             executive: toUserInfo(this.executive),
             startAt: this.talk.intStartAt,
             createdAt: this.talk.intCreatedAt,
@@ -287,10 +298,11 @@ export default class TalkService extends EventEmitter {
         const watchers = (utoken && this.data.watchers.filter((w) => w.user.id === utoken.user.id)) || [];
         return {
             id: this.id,
-            name: this.name,
-            ip: this.customer.ip,
-            online: this.customer.isOnline,
+            name: this.cutoken.customer.name,
+            ip: this.cutoken.ip,
+            online: this.cutoken.isOnline,
             executive: toUserInfo(this.executive),
+            status: this.talk.status,
             startAt: this.talk.intStartAt,
             createdAt: this.talk.intCreatedAt,
             disconnectedAt: this.data.disconnectedAt,
@@ -302,8 +314,8 @@ export default class TalkService extends EventEmitter {
     public toJsonForCustomer(): IES.Talks.TalkForCustomer {
         return {
             id: this.id,
-            name: this.name,
-            online: this.customer.isOnline,
+            name: this.cutoken.customer.name,
+            online: this.cutoken.isOnline,
             executive: toUserInfo(this.executive),
             startAt: this.talk.intStartAt,
             createdAt: this.talk.intCreatedAt,
@@ -314,7 +326,7 @@ export default class TalkService extends EventEmitter {
     public onReconnected() {
         this.data.disconnectedAt = 0;
         this.clearDestroyTimer();
-        this.customer.socket.emit('talks/talk', this.toJsonForCustomer());
+        this.cutoken.socket.emit('talks/talk', this.toJsonForCustomer());
         this.nsp.emit('talks/talk-online', { talkId: this.id });
     }
 
@@ -330,22 +342,21 @@ export default class TalkService extends EventEmitter {
     }
 
     public async close() {
-        const clostAt = this.data.disconnectedAt ? moment(this.data.disconnectedAt) : moment();
+        this.cutoken.socket.disconnect();
+        this.emit('close');
         if (this.talk.startAt) {
             const closedAt = moment();
             this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
+            this.talk.status = TalkStatus.Closed;
             this.talk = await this.talk.save();
             this.data.executive = null;
             this.nsp.emit('talks/talk-closed', { talkId: this.id, closedAt: closedAt.valueOf() });
         } else {
             const talkId = this.id;
-            /** 移除未開啟服務的 task */
-
-            await this.talk.remove();
+            this.talk.status = TalkStatus.Unprocessed;
+            this.talk = await this.talk.save();
             this.nsp.emit('talks/talk-discard', { talkId });
         }
-        this.customer.socket.disconnect();
-        this.emit('close');
     }
 
     public updateExecutive() {

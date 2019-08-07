@@ -3,6 +3,8 @@ const gulp = require('gulp');
 const ts = require('gulp-typescript');
 const tsp = ts.createProject('tsconfig.json');
 
+
+
 function buildMigrations(filename) {
     return gulp
         .src(`./migrations/${filename}`)

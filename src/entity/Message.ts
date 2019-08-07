@@ -8,6 +8,12 @@ export enum MessageType {
     Image = 'image',
 }
 
+export enum FromType {
+    System = 'system',
+    Service = 'service',
+    Customer = 'customer',
+}
+
 @Entity()
 export class Message extends BaseEntity {
     @PrimaryGeneratedColumn({
@@ -23,6 +29,13 @@ export class Message extends BaseEntity {
     })
     @Index()
     public talkId!: number;
+
+    @Column({
+        name: 'from_type',
+        type: 'enum',
+        enum: FromType,
+    })
+    public fromType!: FromType;
 
     @Column({
         type: 'varchar',

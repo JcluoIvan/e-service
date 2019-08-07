@@ -10,12 +10,13 @@ export interface PaginateData<T> {
 
 export default class BaseRepository<T> extends Repository<T> {
     public async paginate(
+        tableName: string,
         query: { page: number; size: number; sorts?: string[] },
         cb: (query: SelectQueryBuilder<T>) => void,
     ): Promise<PaginateData<T>> {
         const page = Math.max(1, Number(query.page) || 1);
         const size = Number(query.size) || 20;
-        const queryBuilder = this.createQueryBuilder();
+        const queryBuilder = this.createQueryBuilder(tableName);
         if (query.sorts) {
             query.sorts.forEach((str) => {
                 const [key, by = 'ASC'] = str.split(',');

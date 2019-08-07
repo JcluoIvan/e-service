@@ -60,26 +60,26 @@ export default class UserToken extends EventEmitter {
         return this.data.token;
     }
 
-    // public async login(socket: IUser.Socket, password: string) {
-    //     await this.data.user.reload();
+    public async login(socket: IUser.Socket, password: string) {
+        await this.data.user.reload();
 
-    //     if (!this.user.checkPassword(password)) {
-    //         throw new LoginFailedError();
-    //     }
+        if (!this.user.checkPassword(password)) {
+            throw new LoginFailedError();
+        }
 
-    //     if (this.isOnline) {
-    //         this.socket.emit('message/error', { message: '重複登入' });
-    //         this.socket.disconnect();
-    //     }
-    //     this.data.socket = socket;
+        if (this.isOnline) {
+            this.socket.emit('message/error', { message: '重複登入' });
+            this.socket.disconnect();
+        }
+        this.data.socket = socket;
 
-    //     this.generateToken();
-    //     this.onConnected();
+        this.data.token = this.generateToken(this.user);
+        this.onConnected();
 
-    //     this.emit('connected');
-    //     this.clearDestroyTime();
-    //     return this.token;
-    // }
+        this.emit('connected');
+        this.clearDestroyTime();
+        return this.token;
+    }
 
     public async reconnect(socket: IUser.Socket, token: string) {
         if (token && token !== this.data.token) {

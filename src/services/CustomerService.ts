@@ -38,20 +38,19 @@ export default class CustomerService extends EventEmitter {
         };
 
         nsp.on('connect', async (socket: ICustomer.Socket) => {
-            const id: string = socket.handshake.query.id || null;
+            const key: string = socket.handshake.query.key || null;
             const name: string = socket.handshake.query.name || '';
-            const token: string = socket.handshake.query.token || '';
 
-            const ctoken = await this.findOrGenerateCustomerToken({ id, name }, token);
-
-            await ctoken.connect(socket);
+            const ctoken = await this.findOrGenerateCustomerToken(socket, { key, name, companyId: company.id });
 
             socket.on('disconnect', () => {
                 ctoken.onDisconnect();
             });
+
             this.emit('connect', { ctoken });
 
-            socket.emit('token', { token: ctoken.token });
+            socket.emit('customer-key', { key: ctoken.customer.key });
+            logger.error('key ==== ', key, ', response ==== ', ctoken.customer.key);
         });
     }
 
@@ -59,17 +58,17 @@ export default class CustomerService extends EventEmitter {
         return this.data.mapCustomers.get(id);
     }
 
-    public async findOrGenerateCustomerToken(cdata: CustomerData, token: string) {
-        // const find = this.customers.find((c) => !c.isOnline && c.token === token);
-        const find = this.data.mapCustomers.get(token);
+    public async findOrGenerateCustomerToken(socket: ICustomer.Socket, data: CustomerData) {
+        const find = this.data.mapCustomers.get(data.key);
         if (find) {
+            await find.reconnect(socket);
             return find;
         }
 
-        const ctoken = new CustomerToken(cdata, token || null);
-        this.data.mapCustomers.set(ctoken.token, ctoken);
+        const ctoken = await CustomerToken.createCustomerToken(socket, data);
+        this.data.mapCustomers.set(ctoken.customer.key, ctoken);
         ctoken.on('destroy', () => {
-            this.data.mapCustomers.delete(ctoken.token);
+            this.data.mapCustomers.delete(ctoken.customer.key);
         });
 
         return ctoken;

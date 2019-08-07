@@ -21,6 +21,7 @@ declare namespace IES {
             name: string;
             ip: string;
             online: boolean;
+            status: 'waiting' | 'start' | 'closed' | 'unprocessed';
             executive: UserInfo;
             disconnectedAt: number;
             startAt: number;
@@ -45,6 +46,7 @@ declare namespace IES {
         interface Message {
             id: number;
             talkId: number;
+            fromType: 'system' | 'service' | 'customer';
             user: IES.UserInfo;
             content: string;
             type: 'text' | 'image';
@@ -219,6 +221,7 @@ declare namespace IUser {
                 data: {
                     talkId: number;
                     startAt: number;
+                    status: 'waiting' | 'start' | 'closed' | 'unprocessed';
                     executive: IES.UserInfo;
                 },
             ): boolean;
@@ -244,13 +247,17 @@ declare namespace IUser {
         }
 
         interface Listener<T = any> extends ISK.Listener<T, Socket> {
-
             (event: 'login', listener: ISK.ListenerHandle<ListenerData.Login.Request, ListenerData.Login.Response>): T;
 
             // (event: 'customer/join', listener: (data: { id?: string; name: string }, response: () => void) => void): T;
 
             (event: 'talks/talk-lock', listener: ISK.ListenerHandle<number>): T;
             (event: 'talks/talk-unlock', listener: ISK.ListenerHandle<number>): T;
+
+            (
+                event: 'talks/check-messages',
+                listener: ISK.ListenerHandle<{ talkId: number; lastMessageId: number }, IES.Talks.Message[]>,
+            ): T;
 
             /** 開始服務顧客 */
             (event: 'talks/talk-start', listener: ISK.ListenerHandle<{ talkId: number }>): T;

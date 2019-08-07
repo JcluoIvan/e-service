@@ -6,8 +6,9 @@ import { User, UserRole } from '../entity/User';
 import { UserNotFoundError } from '../exceptions/login.errors';
 import { UserRepository } from '../repository/UserRepository';
 import { isValid, isRequired, isMax, isMin, isIn, isWhen } from '../validations';
+import { TalkRepository } from '../repository/TalkRepository';
 
-export default class UserController extends BaseController {
+export default class TalkController extends BaseController {
     public async findUser() {
         const id = this.request.params.id;
         const user = await getConnection()
@@ -19,19 +20,17 @@ export default class UserController extends BaseController {
         this.response.send(user);
     }
 
-    public async listUser() {
+    public async listTalks() {
         const queryData = this.request.query || {};
-        const rows = await getConnection()
-            .getCustomRepository(UserRepository)
-            .paginate('user', queryData, (buildQuery) => {
-                buildQuery.where('company_id = :cid', { cid: this.user.companyId }).addOrderBy('id', 'ASC');
-                const role = queryData.role;
-                if (role && role !== 'all') {
-                    buildQuery.andWhere('role = :role', { role: queryData.role });
-                }
+        const res = await getConnection()
+            .getCustomRepository(TalkRepository)
+            .paginate('talk', queryData, (buildQuery) => {
+                buildQuery
+                    .where('talk.company_id = :cid', { cid: this.user.companyId })
+                    .addOrderBy('talk.id', 'DESC')
+                    .leftJoinAndMapOne('talk.customer', 'customer', 'ct', 'ct.id = talk.customer_id');
             });
-
-        this.response.send(rows);
+        this.response.send(res);
     }
 
     public async saveUser() {

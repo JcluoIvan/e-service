@@ -1,9 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } from 'typeorm';
 import * as moment from 'moment';
+import { Customer } from './Customer';
 
 /**
- * 任務 (顧客加入系統後開始)
+ * 任務 (訪客加入系統後開始)
  */
+
+export enum TalkStatus {
+    Waiting = 'waiting',
+    Start = 'start',
+    Closed = 'closed',
+    Unprocessed = 'unprocessed',
+}
 @Entity()
 export class Talk extends BaseEntity {
     @PrimaryGeneratedColumn({
@@ -11,28 +19,22 @@ export class Talk extends BaseEntity {
     })
     public id!: number;
 
+    @Column({
+        name: 'company_id',
+        type: 'int',
+        unsigned: true,
+    })
+    public companyId!: number;
+
     /**
-     * 顧客 id (由介接系統提供, 非必填)
+     * 訪客 id
      */
     @Column({
         name: 'customer_id',
-        type: 'varchar',
-        length: 50,
-        nullable: true,
-        default: null,
+        type: 'int',
+        unsigned: true,
     })
-    public customerId!: string;
-
-    /**
-     * 顧客 name (顧客加入系統填寫的名稱)
-     */
-    @Column({
-        name: 'customer_name',
-        type: 'varchar',
-        length: 20,
-        nullable: false,
-    })
-    public customerName!: string;
+    public customerId!: number;
 
     @Column({
         name: 'executive_id',
@@ -48,6 +50,18 @@ export class Talk extends BaseEntity {
         nullable: false,
     })
     public score!: number;
+
+    @Column({
+        type: 'varchar',
+        length: 42,
+    })
+    public ip!: string;
+
+    @Column({
+        type: 'enum',
+        enum: TalkStatus,
+    })
+    public status!: TalkStatus;
 
     @Column({
         name: 'start_at',
@@ -82,4 +96,6 @@ export class Talk extends BaseEntity {
     get intClosedAt() {
         return this.closedAt ? moment(this.closedAt).valueOf() : 0;
     }
+
+    public customer!: Customer;
 }
