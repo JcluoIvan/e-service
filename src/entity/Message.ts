@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index, BaseEntity } from 'typeorm';
+import { User } from './User';
 
 export enum MessageType {
     /* 文字內容 */
@@ -75,6 +76,9 @@ export class Message extends BaseEntity {
         type: 'datetime',
     })
     public createdAt!: string;
+
+    /** for left join */
+    public user!: User;
 
     public getContent() {
         return this.type === MessageType.Image ? `${process.env.MESSAGE__IMAGE_URL}/${this.content}` : this.content;

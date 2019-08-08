@@ -1,5 +1,5 @@
 import BaseController from './BaseController';
-import { getConnection } from 'typeorm';
+import { getConnection, getCustomRepository } from 'typeorm';
 import { StatusCode } from '../exceptions';
 import logger from '../config/logger';
 import { User, UserRole } from '../entity/User';
@@ -7,17 +7,21 @@ import { UserNotFoundError } from '../exceptions/login.errors';
 import { UserRepository } from '../repository/UserRepository';
 import { isValid, isRequired, isMax, isMin, isIn, isWhen } from '../validations';
 import { TalkRepository } from '../repository/TalkRepository';
+import { Message } from '../entity/Message';
+import { MessageRepository } from '../repository/MessageRepository';
+import { Talk } from '../entity/Talk';
+import { TalkNotFoundError } from '../exceptions/center.error';
 
 export default class TalkController extends BaseController {
-    public async findUser() {
-        const id = this.request.params.id;
-        const user = await getConnection()
-            .getCustomRepository(UserRepository)
-            .findUser(id, this.user.companyId);
-        if (!user) {
+    public async findTalk() {
+        const id = this.request.params.tid;
+        const talk = await getConnection()
+            .getCustomRepository(TalkRepository)
+            .findTalk(id, this.user.companyId);
+        if (!talk) {
             throw new UserNotFoundError();
         }
-        this.response.send(user);
+        this.response.send(talk);
     }
 
     public async listTalks() {
@@ -31,6 +35,76 @@ export default class TalkController extends BaseController {
                     .leftJoinAndMapOne('talk.customer', 'customer', 'ct', 'ct.id = talk.customer_id');
             });
         this.response.send(res);
+    }
+
+    public async listAfterMessages() {
+        const cid = this.user.companyId;
+        const tid = this.request.params.tid;
+        const mid = this.request.params.mid;
+        const qdata = this.request.query || {};
+
+        const size = Number(qdata.size || 20) || 20;
+
+        const exists = await getConnection()
+            .getCustomRepository(TalkRepository)
+            .findTalk(tid, cid);
+        if (!exists) {
+            throw new TalkNotFoundError();
+        }
+
+        const query = await getConnection()
+            .createQueryBuilder(Message, 'msg')
+            .where('msg.talk_id = :tid AND msg.id > :mid', { tid, mid });
+
+        const remaining = (await query.getCount()) - size;
+        const rows = await query
+            .leftJoinAndMapOne('msg.user', 'user', 'u', 'u.id = msg.user_id')
+            .orderBy('msg.id', 'ASC')
+            .take(size)
+            .getMany();
+        this.response.send({
+            rows: rows.map((row) => ({
+                ...row,
+                content: row.getContent(),
+            })),
+            remaining: Math.max(remaining, 0),
+        });
+    }
+
+    public async listBeforeMessages() {
+        const cid = this.user.companyId;
+        const tid = this.request.params.tid;
+        const mid = this.request.params.mid;
+        const qdata = this.request.query || {};
+
+        const size = Number(qdata.size || 20) || 20;
+
+        const exists = await getConnection()
+            .getCustomRepository(TalkRepository)
+            .findTalk(tid, cid);
+        if (!exists) {
+            throw new TalkNotFoundError();
+        }
+        const query = await getConnection()
+            .createQueryBuilder(Message, 'msg')
+            .where('msg.talk_id = :tid', { tid });
+        if (mid > 0) {
+            query.andWhere('msg.id < :mid', { mid });
+        }
+
+        const remaining = (await query.getCount()) - size;
+        const rows = await query
+            .leftJoinAndMapOne('msg.user', 'user', 'u', 'u.id = msg.user_id')
+            .orderBy('msg.id', 'DESC')
+            .take(size)
+            .getMany();
+        this.response.send({
+            rows: rows.map((row) => ({
+                ...row,
+                content: row.getContent(),
+            })),
+            remaining: Math.max(remaining, 0),
+        });
     }
 
     public async saveUser() {

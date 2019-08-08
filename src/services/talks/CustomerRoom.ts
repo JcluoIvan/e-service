@@ -149,7 +149,7 @@ export default class CustomerRoom extends EventEmitter {
         this.talk.startAt = startAt.format('YYYY-MM-DD HH:mm:ss');
         this.talk.executiveId = executive.user.id;
         this.talk.status = TalkStatus.Start;
-        this.talk.closedAt = null;
+        this.talk.timeWaiting = this.talk.intStartAt - this.talk.intCreatedAt;
 
         this.talk = await this.talk.save();
         this.data.executive = executive;
@@ -342,20 +342,24 @@ export default class CustomerRoom extends EventEmitter {
     }
 
     public async close() {
+        const closedAt = moment();
         this.cutoken.socket.disconnect();
         this.emit('close');
+
+        this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
+
         if (this.talk.startAt) {
-            const closedAt = moment();
-            this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
             this.talk.status = TalkStatus.Closed;
+            this.talk.timeService = this.talk.intClosedAt - this.talk.intStartAt;
             this.talk = await this.talk.save();
             this.data.executive = null;
             this.nsp.emit('talks/talk-closed', { talkId: this.id, closedAt: closedAt.valueOf() });
         } else {
             const talkId = this.id;
             this.talk.status = TalkStatus.Unprocessed;
+            this.talk.timeWaiting = this.talk.timeWaiting = this.talk.intClosedAt - this.talk.intCreatedAt;
             this.talk = await this.talk.save();
-            this.nsp.emit('talks/talk-discard', { talkId });
+            this.nsp.emit('talks/talk-unprocessed', { talkId, closedAt: closedAt.valueOf() });
         }
     }
 

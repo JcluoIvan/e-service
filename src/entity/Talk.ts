@@ -11,6 +11,8 @@ export enum TalkStatus {
     Start = 'start',
     Closed = 'closed',
     Unprocessed = 'unprocessed',
+    /* 系統不正常關閉，造成斷線*/
+    Shutdown = 'shutdown',
 }
 @Entity()
 export class Talk extends BaseEntity {
@@ -45,13 +47,6 @@ export class Talk extends BaseEntity {
     public executiveId!: number;
 
     @Column({
-        type: 'tinyint',
-        unsigned: true,
-        nullable: false,
-    })
-    public score!: number;
-
-    @Column({
         type: 'varchar',
         length: 42,
     })
@@ -62,6 +57,22 @@ export class Talk extends BaseEntity {
         enum: TalkStatus,
     })
     public status!: TalkStatus;
+
+    @Column({
+        name: 'time_waiting',
+        type: 'int',
+        unsigned: true,
+        default: 0,
+    })
+    public timeWaiting!: number;
+
+    @Column({
+        name: 'time_service',
+        type: 'int',
+        unsigned: true,
+        default: 0,
+    })
+    public timeService!: number;
 
     @Column({
         name: 'start_at',
@@ -97,5 +108,6 @@ export class Talk extends BaseEntity {
         return this.closedAt ? moment(this.closedAt).valueOf() : 0;
     }
 
+    /** for left join */
     public customer!: Customer;
 }

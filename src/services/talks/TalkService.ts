@@ -13,6 +13,7 @@ import { eventArticle } from '../../events/event-article';
 import { getConnection } from 'typeorm';
 import { Article, AutoSend } from '../../entity/Article';
 import { FromType } from '../../entity/Message';
+import { Talk, TalkStatus } from '../../entity/Talk';
 
 enum Mode {
     /* 平均 */
@@ -69,6 +70,8 @@ export default class CenterService extends BaseService {
             this.updateAutoSend();
         });
         this.updateAutoSend();
+
+        this.updateTalkShutdown();
     }
 
     private async updateAutoSend() {
@@ -85,6 +88,16 @@ export default class CenterService extends BaseService {
 
         this.autoSendConnecteds = rows.filter((r) => r.autoSend === AutoSend.Connected).map((r) => r.content);
         this.autoSendStarts = rows.filter((r) => r.autoSend === AutoSend.Start).map((r) => r.content);
+    }
+    private async updateTalkShutdown() {
+        return await getConnection()
+            .createQueryBuilder(Talk, 'talk')
+            .update()
+            .set({
+                status: TalkStatus.Shutdown,
+            })
+            .where(`status != :status`, { status: TalkStatus.Closed })
+            .execute();
     }
 
     private getTalk(talkId: number) {
@@ -175,16 +188,6 @@ export default class CenterService extends BaseService {
             }
         });
 
-        utoken.socket.on('talks/check-messages', async (data, res) => {
-            try {
-                const talk = this.getTalk(data.talkId);
-                const messages = talk.messages.filter((m) => m.id > data.lastMessageId);
-                res(responseSuccess(messages));
-            } catch (err) {
-                res(throwError(err));
-            }
-        });
-
         utoken.socket.on('talks/talk-close', (data) => {
             const talk = this.mapTalks.get(data.talkId);
             if (talk && talk.executive && talk.executive.user.id === utoken.user.id) {
@@ -194,11 +197,12 @@ export default class CenterService extends BaseService {
 
         utoken.socket.on('disconnect', () => {
             logger.error(utoken.isOnline);
-            this.talks
-                .filter((t) => t.executive && t.executive.user.id === utoken.user.id)
-                .forEach((talk) => {
+            this.talks.forEach((talk) => {
+                if (talk.executive && talk.executive.user.id === utoken.user.id) {
                     talk.updateExecutive();
-                });
+                }
+                talk.leaveWatcher(utoken);
+            });
         });
 
         utoken.socket.on('talks/talk-join', ({ talkId }) => {

@@ -21,7 +21,7 @@ declare namespace IES {
             name: string;
             ip: string;
             online: boolean;
-            status: 'waiting' | 'start' | 'closed' | 'unprocessed';
+            status: 'waiting' | 'start' | 'closed' | 'unprocessed' | 'shutdown';
             executive: UserInfo;
             disconnectedAt: number;
             startAt: number;
@@ -210,7 +210,7 @@ declare namespace IUser {
             (event: 'talks/talk-queue', data: IES.Talks.Talk[]): boolean;
 
             /** 捨棄 talk (未開始 & 顧客離線且 session 過期) */
-            (event: 'talks/talk-discard', data: { talkId: number }): boolean;
+            (event: 'talks/talk-unprocessed', data: { talkId: number }): boolean;
 
             /** 更新 watch talks */
             (event: 'talks/talk-watchers', data: number[]): boolean;

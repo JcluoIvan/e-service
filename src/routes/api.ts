@@ -31,5 +31,8 @@ router.post('/users/:id/save', handleUser(async (ctrl) => await ctrl.saveUser())
 
 const handleTalk = handlerController(TalkController);
 router.get('/talks', handleTalk(async (ctrl) => await ctrl.listTalks()));
+router.get('/talks/:tid', handleTalk(async (ctrl) => await ctrl.findTalk()));
+router.get('/talks/:tid/messages/after/:mid', handleTalk(async (ctrl) => await ctrl.listAfterMessages()));
+router.get('/talks/:tid/messages/before/:mid', handleTalk(async (ctrl) => await ctrl.listBeforeMessages()));
 
 export default router;
