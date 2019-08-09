@@ -5,6 +5,7 @@ import { ArticleNotFoundError } from '../exceptions/article.error';
 import { StatusCode } from '../exceptions';
 import logger from '../config/logger';
 import { eventArticle } from '../events/event-article';
+import { ArticleRepository } from '../repository/ArticleRepository';
 
 const getAutoSend = (autoSend: any, def = AutoSend.None): AutoSend => {
     return (
@@ -36,11 +37,13 @@ export default class ArticleController extends BaseController {
         const rows = await getConnection()
             .getRepository(Article)
             .createQueryBuilder()
+            .orderBy('odr')
             .getMany();
         this.response.send(rows);
     }
 
     public async saveArticle() {
+        const cid = this.user.companyId;
         const id = this.request.params.id;
         const data = this.request.body;
         let lastId = 0;
@@ -59,7 +62,11 @@ export default class ArticleController extends BaseController {
             articleEntity.content = data.content;
             articleEntity.share = data.share;
             const article = await articleEntity.save();
-            lastId = Number(data.id);
+            await getConnection()
+                .getCustomRepository(ArticleRepository)
+                .updateOdr(cid, article.autoSend);
+            lastId = Number(article.id);
+            await article.reload();
             eventArticle.emit('save.after', article);
         } else {
             const articleEntity = new Article();
@@ -70,27 +77,42 @@ export default class ArticleController extends BaseController {
             articleEntity.content = data.content;
             articleEntity.share = data.share;
             const article = await articleEntity.save();
+            await getConnection()
+                .getCustomRepository(ArticleRepository)
+                .updateOdr(cid, article.autoSend);
             lastId = article.id;
+            await article.reload();
             eventArticle.emit('save.after', article);
         }
         this.response.send({ id: lastId });
     }
 
-    public async updateAutoSend() {
+    public async moveArticle() {
+        const cid = this.user.companyId;
         const id = this.request.params.id;
         const data = this.request.body;
         const autoSend = getAutoSend(data.autoSend);
+        const odr = data.odr || 0;
         const articleEntity = await getConnection()
             .getRepository(Article)
             .createQueryBuilder('article')
             .where('id = :id', { id })
             .getOne();
+        const res: { odr: number; autoSend: AutoSend | null } = { odr: 0, autoSend: null };
         if (articleEntity) {
             articleEntity.autoSend = autoSend;
+            articleEntity.odr = odr;
             const article = await articleEntity.save();
+            await getConnection()
+                .getCustomRepository(ArticleRepository)
+                .updateOdr(cid, autoSend);
+            await article.reload();
             eventArticle.emit('save.after', article);
+            res.odr = article.odr;
+            logger.warn(`odr = ${article.odr}`);
+            res.autoSend = article.autoSend;
         }
-        this.response.sendStatus(StatusCode.NoContent);
+        this.response.send(res);
     }
 
     public async deleteArticle() {

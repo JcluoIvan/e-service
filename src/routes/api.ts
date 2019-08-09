@@ -17,7 +17,9 @@ router.get('/articles/:id', handleArticle(async (ctrl) => await ctrl.findAtricle
 
 router.post('/articles/:id/save', handleArticle(async (ctrl) => await ctrl.saveArticle()));
 
-router.post('/articles/:id/update-auto-send', handleArticle(async (ctrl) => await ctrl.updateAutoSend()));
+// router.post('/articles/:id/update-auto-send', handleArticle(async (ctrl) => await ctrl.updateAutoSend()));
+
+router.post('/articles/:id/move', handleArticle(async (ctrl) => await ctrl.moveArticle()));
 
 router.post('/articles/:id/delete', handleArticle(async (ctrl) => ctrl.deleteArticle()));
 
@@ -32,7 +34,9 @@ router.post('/users/:id/save', handleUser(async (ctrl) => await ctrl.saveUser())
 const handleTalk = handlerController(TalkController);
 router.get('/talks', handleTalk(async (ctrl) => await ctrl.listTalks()));
 router.get('/talks/:tid', handleTalk(async (ctrl) => await ctrl.findTalk()));
-router.get('/talks/:tid/messages/after/:mid', handleTalk(async (ctrl) => await ctrl.listAfterMessages()));
-router.get('/talks/:tid/messages/before/:mid', handleTalk(async (ctrl) => await ctrl.listBeforeMessages()));
+router.get('/talks/:tid/messages-after/:mid', handleTalk(async (ctrl) => await ctrl.listAfterMessages()));
+router.get('/talks/:tid/messages-before/:mid', handleTalk(async (ctrl) => await ctrl.listBeforeMessages()));
+router.post('/talks/:tid/messages/:mid/update', handleTalk(async (ctrl) => await ctrl.updateMessage()));
+router.post('/talks/:tid/messages/:mid/delete', handleTalk(async (ctrl) => await ctrl.deleteMessage()));
 
 export default router;

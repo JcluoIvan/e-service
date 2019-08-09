@@ -7,10 +7,34 @@ import { UserNotFoundError } from '../exceptions/login.errors';
 import { UserRepository } from '../repository/UserRepository';
 import { isValid, isRequired, isMax, isMin, isIn, isWhen } from '../validations';
 import { TalkRepository } from '../repository/TalkRepository';
-import { Message } from '../entity/Message';
+import { Message, MessageType } from '../entity/Message';
 import { MessageRepository } from '../repository/MessageRepository';
 import { Talk } from '../entity/Talk';
 import { TalkNotFoundError } from '../exceptions/center.error';
+import { UnauthorizedEditMessageError } from '../exceptions/talk.error';
+
+const existsTalk = async (companyId: number, talkId: number) => {
+    const nums = await getConnection()
+        .createQueryBuilder(Talk, 't')
+        .where('t.id = :tid AND t.company_id = :cid', { tid: talkId, cid: companyId })
+        .getCount();
+    return nums === 1;
+};
+
+const existsMessage = async (companyId: number, talkId: number, messageId: number) => {
+    const isExists = await existsTalk(companyId, talkId);
+    if (!isExists) {
+        return false;
+    }
+    const nums = await getConnection()
+        .createQueryBuilder(Message, 'm')
+        .where('m.id = :mid AND m.talk_id = :tid', {
+            mid: messageId,
+            tid: talkId,
+        })
+        .getCount();
+    return nums === 1;
+};
 
 export default class TalkController extends BaseController {
     public async findTalk() {
@@ -32,7 +56,8 @@ export default class TalkController extends BaseController {
                 buildQuery
                     .where('talk.company_id = :cid', { cid: this.user.companyId })
                     .addOrderBy('talk.id', 'DESC')
-                    .leftJoinAndMapOne('talk.customer', 'customer', 'ct', 'ct.id = talk.customer_id');
+                    .leftJoinAndMapOne('talk.customer', 'customer', 'ct', 'ct.id = talk.customer_id')
+                    .leftJoinAndMapOne('talk.executive', 'user', 'u', 'u.id = talk.executive_id');
             });
         this.response.send(res);
     }
@@ -107,58 +132,54 @@ export default class TalkController extends BaseController {
         });
     }
 
-    public async saveUser() {
-        const id = this.request.params.id;
+    public async updateMessage() {
+        const tid = this.request.params.tid;
+        const mid = this.request.params.mid;
         const data = this.request.body;
         const cid = this.user.companyId;
-        let lastId = 0;
 
-        isValid(data, {
-            username: id ? [] : [isRequired(), isMin(4), isMax(20)],
-            name: isRequired(),
-            role: isIn(UserRole),
-        });
-
-        if (Number(id)) {
-            const user = await getConnection()
-                .getRepository(User)
-                .createQueryBuilder('user')
-                .where('`id` = :id AND `company_id` = :cid', { id, cid })
-                .getOne();
-
-            if (!user) {
-                throw new UserNotFoundError();
-            }
-            user.name = data.name;
-            user.role = data.role;
-            await user.save();
-            lastId = Number(data.id);
-        } else {
-            const userEntity = new User();
-            userEntity.username = data.username;
-            userEntity.name = data.name;
-            userEntity.companyId = cid;
-            userEntity.setPassword(data.password);
-            const user = await userEntity.save();
-            lastId = user.id;
+        if (!this.user.isSupervisor) {
+            throw new UnauthorizedEditMessageError();
         }
 
-        this.response.send({ id: lastId });
+        const isExists = await existsMessage(cid, tid, mid);
+        if (!isExists) {
+            throw new TalkNotFoundError();
+        }
+
+        const content = (data && data.content) || '';
+
+        await getConnection()
+            .createQueryBuilder()
+            .update(Message)
+            .set({
+                content,
+                type: MessageType.Text,
+            })
+            .where('id = :mid', { mid })
+            .execute();
+        this.response.sendStatus(StatusCode.NoContent);
     }
 
-    public async toggleEnabled() {
-        const id = this.request.params.id;
-    }
-
-    public async deleteArticle() {
-        const id = this.request.params.id;
+    public async deleteMessage() {
+        const tid = this.request.params.tid;
+        const mid = this.request.params.mid;
         const cid = this.user.companyId;
+
+        if (!this.user.isSupervisor) {
+            throw new UnauthorizedEditMessageError();
+        }
+
+        const isExists = await existsMessage(cid, tid, mid);
+        if (!isExists) {
+            throw new TalkNotFoundError();
+        }
 
         await getConnection()
             .createQueryBuilder()
             .delete()
-            .from(User)
-            .where('id = :id AND companyId = :cid', { id, cid })
+            .from(Message)
+            .where('id = :mid', { mid })
             .execute();
         this.response.sendStatus(StatusCode.NoContent);
     }

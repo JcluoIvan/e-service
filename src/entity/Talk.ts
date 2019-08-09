@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } from 'typeorm';
 import * as moment from 'moment';
 import { Customer } from './Customer';
+import { User } from './User';
 
 /**
  * 任務 (訪客加入系統後開始)
@@ -110,4 +111,6 @@ export class Talk extends BaseEntity {
 
     /** for left join */
     public customer!: Customer;
+    /** for left join */
+    public executive!: User;
 }

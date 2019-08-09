@@ -62,6 +62,15 @@ export class Article extends BaseEntity {
     })
     public autoSend!: AutoSend;
 
+    /**
+     * 順序
+     */
+    @Column({
+        type: 'int',
+        default: 0,
+    })
+    public odr!: number;
+
     @CreateDateColumn({
         name: 'updated_at',
         nullable: true,
