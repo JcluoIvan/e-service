@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } 
 import * as moment from 'moment';
 import { Customer } from './Customer';
 import { User } from './User';
+import { Message } from './Message';
 
 /**
  * 任務 (訪客加入系統後開始)
@@ -108,6 +109,8 @@ export class Talk extends BaseEntity {
     get intClosedAt() {
         return this.closedAt ? moment(this.closedAt).valueOf() : 0;
     }
+
+    public messages!: Message[];
 
     /** for left join */
     public customer!: Customer;

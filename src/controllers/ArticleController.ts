@@ -1,11 +1,12 @@
 import BaseController from './BaseController';
 import { Article, AutoSend } from '../entity/Article';
 import { getConnection } from 'typeorm';
-import { ArticleNotFoundError } from '../exceptions/article.error';
+import { ArticleNotFoundError, ArticleForbiddenError } from '../exceptions/article.error';
 import { StatusCode } from '../exceptions';
 import logger from '../config/logger';
 import { eventArticle } from '../events/event-article';
 import { ArticleRepository } from '../repository/ArticleRepository';
+import { User } from '../entity/User';
 
 const getAutoSend = (autoSend: any, def = AutoSend.None): AutoSend => {
     return (
@@ -34,11 +35,20 @@ export default class ArticleController extends BaseController {
     }
 
     public async allArticle() {
-        const rows = await getConnection()
+        const queryData = this.request.query || {};
+        const values = {
+            cid: this.user.companyId,
+            uid: queryData.userId || 0,
+        };
+
+        const query = await getConnection()
             .getRepository(Article)
             .createQueryBuilder()
-            .orderBy('odr')
-            .getMany();
+            .where(`company_id = :cid AND (user_id = :uid OR auto_send IN ('start', 'connected'))`, values)
+            .orderBy('odr');
+
+
+        const rows = await query.getMany();
         this.response.send(rows);
     }
 
@@ -59,6 +69,7 @@ export default class ArticleController extends BaseController {
             }
             articleEntity.key = data.key;
             articleEntity.autoSend = autoSend;
+            articleEntity.name = data.name;
             articleEntity.content = data.content;
             articleEntity.share = data.share;
             const article = await articleEntity.save();
@@ -74,6 +85,7 @@ export default class ArticleController extends BaseController {
             articleEntity.userId = this.utoken.user.id;
             articleEntity.autoSend = autoSend;
             articleEntity.key = data.key;
+            articleEntity.name = data.name;
             articleEntity.content = data.content;
             articleEntity.share = data.share;
             const article = await articleEntity.save();
@@ -118,12 +130,26 @@ export default class ArticleController extends BaseController {
     public async deleteArticle() {
         const id = this.request.params.id;
 
+        const article = await getConnection()
+            .getRepository(Article)
+            .createQueryBuilder('article')
+            .where('id = :id AND company_id = :cid', { id, cid: this.user.companyId })
+            .getOne();
+        if (!article) {
+            throw new ArticleNotFoundError();
+        }
+
+        if (article.userId !== this.user.id) {
+            throw new ArticleForbiddenError();
+        }
+
         await getConnection()
             .createQueryBuilder()
             .delete()
             .from(Article)
             .where('id = :id', { id })
             .execute();
+        eventArticle.emit('delete.after', article);
         this.response.sendStatus(StatusCode.NoContent);
     }
 }

@@ -9,6 +9,7 @@ import {
     BaseEntity,
 } from 'typeorm';
 import logger from '../config/logger';
+import { Article } from './Article';
 
 export enum UserRole {
     /* 主管 */
@@ -18,7 +19,6 @@ export enum UserRole {
 }
 
 @Entity()
-@Unique(['companyId', 'username'])
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn({
         unsigned: true,
@@ -88,6 +88,8 @@ export class User extends BaseEntity {
         type: 'datetime',
     })
     public createdAt!: string;
+
+    public articles!: Article[];
 
     get imageUrl() {
         return this.image ? process.env.USER__IMAGE_URL + this.image : '';

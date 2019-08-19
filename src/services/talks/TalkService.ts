@@ -69,6 +69,13 @@ export default class CenterService extends BaseService {
             }
             this.updateAutoSend();
         });
+        eventArticle.on('delete.after', async (article) => {
+            if (article.companyId !== userService.company.id) {
+                return;
+            }
+            this.updateAutoSend();
+        });
+
         this.updateAutoSend();
 
         this.updateTalkShutdown();

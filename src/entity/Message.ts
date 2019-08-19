@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index, BaseEntity } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } from 'typeorm';
 import { User } from './User';
 
 export enum MessageType {
@@ -28,7 +28,6 @@ export class Message extends BaseEntity {
         nullable: false,
         unsigned: true,
     })
-    @Index()
     public talkId!: number;
 
     @Column({

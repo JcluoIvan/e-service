@@ -4,8 +4,12 @@ import logger from '../config/logger';
 import { handlerController } from '../controllers/BaseController';
 import UserController from '../controllers/UserController';
 import TalkController from '../controllers/TalkController';
+import OptionController from '../controllers/OptionController';
 
 const router = Router();
+
+const handleOption = handlerController(OptionController);
+router.get('/option/users', handleOption(async (ctrl) => await ctrl.userOptions()));
 
 const handleArticle = handlerController(ArticleController);
 
@@ -38,5 +42,7 @@ router.get('/talks/:tid/messages-after/:mid', handleTalk(async (ctrl) => await c
 router.get('/talks/:tid/messages-before/:mid', handleTalk(async (ctrl) => await ctrl.listBeforeMessages()));
 router.post('/talks/:tid/messages/:mid/update', handleTalk(async (ctrl) => await ctrl.updateMessage()));
 router.post('/talks/:tid/messages/:mid/delete', handleTalk(async (ctrl) => await ctrl.deleteMessage()));
+
+
 
 export default router;

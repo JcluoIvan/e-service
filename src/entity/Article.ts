@@ -30,6 +30,12 @@ export class Article extends BaseEntity {
     public companyId!: number;
 
     @Column({
+        type: 'varchar',
+        length: 50,
+    })
+    public name!: string;
+
+    @Column({
         name: 'user_id',
         type: 'int',
         unsigned: true,

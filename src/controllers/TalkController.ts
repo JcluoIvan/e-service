@@ -65,21 +65,30 @@ export default class TalkController extends BaseController {
     public async listAfterMessages() {
         const cid = this.user.companyId;
         const tid = this.request.params.tid;
-        const mid = this.request.params.mid;
+        const mid = Number(this.request.params.mid) || 0;
         const qdata = this.request.query || {};
 
         const size = Number(qdata.size || 20) || 20;
 
-        const exists = await getConnection()
+        const talk = await getConnection()
             .getCustomRepository(TalkRepository)
             .findTalk(tid, cid);
-        if (!exists) {
+        if (!talk) {
             throw new TalkNotFoundError();
         }
+        const customerId = talk.customerId;
 
-        const query = await getConnection()
-            .createQueryBuilder(Message, 'msg')
-            .where('msg.talk_id = :tid AND msg.id > :mid', { tid, mid });
+        const query = await getConnection().createQueryBuilder(Message, 'msg');
+
+        if (mid > 0) {
+            query.andWhere('msg.id > :mid', { mid });
+        } else {
+            query.andWhere('msg.talk_id >= :tid', { tid });
+        }
+
+        query.andWhere('msg.talk_id IN (SELECT id FROM `talk` AS tk WHERE tk.customer_id = :customerId)', {
+            customerId,
+        });
 
         const remaining = (await query.getCount()) - size;
         const rows = await query
@@ -87,11 +96,22 @@ export default class TalkController extends BaseController {
             .orderBy('msg.id', 'ASC')
             .take(size)
             .getMany();
+
+        const talkIds = rows.reduce<number[]>((ids, r) => (ids.indexOf(r.talkId) >= 0 ? ids : [...ids, r.talkId]), []);
+
+        const talks = talkIds.length
+            ? await getConnection()
+                  .createQueryBuilder(Talk, 'talk')
+                  .whereInIds(talkIds)
+                  .getMany()
+            : [];
+
         this.response.send({
             rows: rows.map((row) => ({
                 ...row,
                 content: row.getContent(),
             })),
+            talks,
             remaining: Math.max(remaining, 0),
         });
     }
@@ -99,23 +119,29 @@ export default class TalkController extends BaseController {
     public async listBeforeMessages() {
         const cid = this.user.companyId;
         const tid = this.request.params.tid;
-        const mid = this.request.params.mid;
+        const mid = Number(this.request.params.mid) || 0;
         const qdata = this.request.query || {};
 
         const size = Number(qdata.size || 20) || 20;
 
-        const exists = await getConnection()
+        const talk = await getConnection()
             .getCustomRepository(TalkRepository)
             .findTalk(tid, cid);
-        if (!exists) {
+        if (!talk) {
             throw new TalkNotFoundError();
         }
-        const query = await getConnection()
-            .createQueryBuilder(Message, 'msg')
-            .where('msg.talk_id = :tid', { tid });
+        const customerId = talk.customerId;
+
+        const query = await getConnection().createQueryBuilder(Message, 'msg');
         if (mid > 0) {
             query.andWhere('msg.id < :mid', { mid });
+        } else {
+            query.andWhere('msg.talk_id <= :tid', { tid });
         }
+
+        query.andWhere('msg.talk_id IN (SELECT id FROM `talk` AS tk WHERE tk.customer_id = :customerId)', {
+            customerId,
+        });
 
         const remaining = (await query.getCount()) - size;
         const rows = await query
@@ -123,11 +149,22 @@ export default class TalkController extends BaseController {
             .orderBy('msg.id', 'DESC')
             .take(size)
             .getMany();
+
+        const talkIds = rows.reduce<number[]>((ids, r) => (ids.indexOf(r.talkId) >= 0 ? ids : [...ids, r.talkId]), []);
+
+        const talks = talkIds.length
+            ? await getConnection()
+                  .createQueryBuilder(Talk, 'talk')
+                  .whereInIds(talkIds)
+                  .getMany()
+            : [];
+
         this.response.send({
             rows: rows.map((row) => ({
                 ...row,
                 content: row.getContent(),
             })),
+            talks,
             remaining: Math.max(remaining, 0),
         });
     }
