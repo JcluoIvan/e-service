@@ -184,6 +184,8 @@ declare namespace IUser {
             /** 重新連線 */
             // (event: 'login', data: ListenerData.Login.Response): boolean;
 
+            (event: 'users', data: EmitterData.UserInfo[]): boolean;
+
             (event: 'message/error', data: { message: string }): boolean;
 
             (event: 'talks/talks', data: EmitterData.Center.Talk[]): boolean;
@@ -261,6 +263,9 @@ declare namespace IUser {
 
             /** 開始服務顧客 */
             (event: 'talks/talk-start', listener: ISK.ListenerHandle<{ talkId: number }>): T;
+
+            /** 轉接 */
+            (event: 'talks/transfer', listener: ISK.ListenerHandle<{ talkId: number; userId: number }>): T;
 
             /** 主管加入 talk */
             (event: 'talks/talk-join', listener: ISK.ListenerHandle<{ talkId: number }>): T;

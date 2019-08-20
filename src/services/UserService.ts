@@ -78,13 +78,20 @@ export default class UserService extends EventEmitter {
                     };
                     res(responseSuccess(resData));
                     this.emit('connect', { utoken });
+
+                    this.broadcastUsers();
                 } catch (err) {
                     logger.error(`Error: ${err.message}`, err);
                     res(throwError(err));
                 }
             });
+
+            socket.on('disconnect', () => {
+                this.broadcastUsers();
+            });
         });
     }
+
     public findById(id: number) {
         return this.data.users.get(id);
     }
@@ -92,6 +99,20 @@ export default class UserService extends EventEmitter {
     public findByToken(token: string) {
         logger.warn(`find token = ${token}`, this.users.map((u) => u.token));
         return this.users.find((u) => u.token === token) || null;
+    }
+
+    private broadcastUsers() {
+        const users: IUser.Socket.EmitterData.UserInfo[] = this.users.map((utoken) => {
+            return {
+                id: utoken.user.id,
+                online: utoken.isOnline,
+                username: utoken.user.username,
+                name: utoken.user.name,
+                imageUrl: utoken.user.imageUrl,
+            };
+        });
+
+        this.nsp.emit('users', users);
     }
 
     private async findUserToken(socket: IUser.Socket, data: { username?: string; password?: string; token?: string }) {

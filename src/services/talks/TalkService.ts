@@ -14,6 +14,7 @@ import { getConnection } from 'typeorm';
 import { Article, AutoSend } from '../../entity/Article';
 import { FromType } from '../../entity/Message';
 import { Talk, TalkStatus } from '../../entity/Talk';
+import { UserNotFoundError } from '../../exceptions/login.errors';
 
 enum Mode {
     /* 平均 */
@@ -194,6 +195,21 @@ export default class CenterService extends BaseService {
                 utoken.socket.emit('message/error', err.message);
             }
         });
+        /** 轉接 */
+        utoken.socket.on('talks/transfer', ({ userId, talkId }) => {
+            try {
+                const tUser = this.userService.findById(userId);
+                const talk = this.getTalk(talkId);
+                if (!tUser) {
+                    throw new UserNotFoundError();
+                }
+
+                talk.transferTo(tUser);
+
+            } catch (err) {
+                utoken.socket.emit('message/error', err.message);
+            }
+        });
 
         utoken.socket.on('talks/talk-close', (data) => {
             const talk = this.mapTalks.get(data.talkId);
@@ -235,6 +251,7 @@ export default class CenterService extends BaseService {
             }
         });
     }
+
     private async findOrCreateTalk(ctoken: CustomerToken) {
         const find = this.talks.find((t) => t.cutoken.customer.id === ctoken.customer.id);
         if (find) {

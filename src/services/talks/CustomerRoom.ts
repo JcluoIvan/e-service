@@ -12,6 +12,7 @@ import * as jimp from 'jimp';
 import logger from '../../config/logger';
 import { fileExists } from '../../support/file';
 import { setTimeout, clearTimeout } from 'timers';
+import { exec } from 'child_process';
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
@@ -152,6 +153,35 @@ export default class CustomerRoom extends EventEmitter {
         this.talk.timeWaiting = this.talk.intStartAt - this.talk.intCreatedAt;
 
         this.talk = await this.talk.save();
+        this.data.executive = executive;
+        this.cutoken.socket.emit('talks/start', {
+            executive: info,
+            messages: this.data.messages,
+            startAt: moment().valueOf(),
+        });
+        executive.socket.nsp.emit('talks/talk-start', {
+            talkId: this.id,
+            startAt: moment().valueOf(),
+            status: this.talk.status,
+            executive: info,
+        });
+    }
+
+    public async transferTo(executive: UserToken) {
+        if (this.isClosed) {
+            return;
+        }
+
+        if (!this.isStart) {
+            this.start(executive);
+            return;
+        }
+
+        const info = toUserInfo(executive);
+        this.talk.executiveId = executive.user.id;
+
+        this.talk = await this.talk.save();
+
         this.data.executive = executive;
         this.cutoken.socket.emit('talks/start', {
             executive: info,
@@ -338,7 +368,7 @@ export default class CustomerRoom extends EventEmitter {
         this.data.disconnectedAt = disconnectedAt;
         this.nsp.emit('talks/talk-offline', { talkId: this.id, disconnectedAt });
         this.clearDestroyTimer();
-        this.data.destroyTimer = setTimeout(() => this.close(), CLOSE_DELAY);
+        // this.data.destroyTimer = setTimeout(() => this.close(), CLOSE_DELAY);
     }
 
     public async close() {

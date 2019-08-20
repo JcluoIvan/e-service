@@ -38,10 +38,15 @@ const existsMessage = async (companyId: number, talkId: number, messageId: numbe
 
 export default class TalkController extends BaseController {
     public async findTalk() {
-        const id = this.request.params.tid;
+        const values = {
+            tid: this.request.params.tid,
+            cid: this.user.companyId,
+        };
         const talk = await getConnection()
-            .getCustomRepository(TalkRepository)
-            .findTalk(id, this.user.companyId);
+            .createQueryBuilder(Talk, 'talk')
+            .leftJoinAndMapOne('talk.executive', 'user', 'usr', 'usr.id = talk.executive_id')
+            .where('talk.id = :tid AND talk.company_id = :cid', values)
+            .getOne();
         if (!talk) {
             throw new UserNotFoundError();
         }
@@ -49,15 +54,43 @@ export default class TalkController extends BaseController {
     }
 
     public async listTalks() {
-        const queryData = this.request.query || {};
+        const qdata = this.request.query || {};
         const res = await getConnection()
             .getCustomRepository(TalkRepository)
-            .paginate('talk', queryData, (buildQuery) => {
+            .paginate('talk', qdata, async (buildQuery) => {
                 buildQuery
                     .where('talk.company_id = :cid', { cid: this.user.companyId })
                     .addOrderBy('talk.id', 'DESC')
                     .leftJoinAndMapOne('talk.customer', 'customer', 'ct', 'ct.id = talk.customer_id')
                     .leftJoinAndMapOne('talk.executive', 'user', 'u', 'u.id = talk.executive_id');
+
+                if (qdata.stime) {
+                    buildQuery.andWhere('talk.created_at >= :stime', { stime: qdata.stime });
+                }
+
+                if (qdata.etime) {
+                    buildQuery.andWhere('talk.created_at <= :stime', { etime: qdata.etime });
+                }
+
+                if (qdata.waitingOperator && qdata.waitingTime && !isNaN(qdata.waitingTime)) {
+                    logger.warn('wt > ', qdata.waitingTime);
+                    const whereSql =
+                        qdata.waitingOperator === 'above' ? 'talk.time_waiting >= :time' : 'talk.time_waiting <= :time';
+                    buildQuery.andWhere(whereSql, {
+                        time: qdata.waitingTime * 1000,
+                    });
+                }
+                if (qdata.executiveUsername) {
+                    const user = await getConnection()
+                        .createQueryBuilder(User, 'usr')
+                        .where('usr.username = :username', { username: qdata.executiveUsername })
+                        .getOne();
+                    const executiveId = user ? user.id : -1;
+                    buildQuery.andWhere('talk.executive_id = :executiveId', { executiveId });
+                }
+                if (qdata.status && qdata.status !== 'all') {
+                    buildQuery.andWhere('talk.status = :status', { status: qdata.status });
+                }
             });
         this.response.send(res);
     }
