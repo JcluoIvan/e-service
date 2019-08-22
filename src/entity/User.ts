@@ -92,7 +92,7 @@ export class User extends BaseEntity {
     public articles!: Article[];
 
     get imageUrl() {
-        return this.image ? process.env.USER__IMAGE_URL + this.image : '';
+        return this.image ? `${process.env.USER__IMAGE_URL}/${this.image}` : '';
     }
 
     get isSupervisor() {

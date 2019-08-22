@@ -12,7 +12,6 @@ import * as jimp from 'jimp';
 import logger from '../../config/logger';
 import { fileExists } from '../../support/file';
 import { setTimeout, clearTimeout } from 'timers';
-import { exec } from 'child_process';
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;

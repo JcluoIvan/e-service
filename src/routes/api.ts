@@ -5,6 +5,7 @@ import { handlerController } from '../controllers/BaseController';
 import UserController from '../controllers/UserController';
 import TalkController from '../controllers/TalkController';
 import OptionController from '../controllers/OptionController';
+import PersonalController from '../controllers/PersonalController';
 
 const router = Router();
 
@@ -43,6 +44,8 @@ router.get('/talks/:tid/messages-before/:mid', handleTalk(async (ctrl) => await 
 router.post('/talks/:tid/messages/:mid/update', handleTalk(async (ctrl) => await ctrl.updateMessage()));
 router.post('/talks/:tid/messages/:mid/delete', handleTalk(async (ctrl) => await ctrl.deleteMessage()));
 
-
+const handlePersonal = handlerController(PersonalController);
+router.get('/personal', handlePersonal(async (ctrl) => await ctrl.getData()));
+router.post('/personal/update/profile', handlePersonal(async (ctrl) => await ctrl.updateProfile()));
 
 export default router;

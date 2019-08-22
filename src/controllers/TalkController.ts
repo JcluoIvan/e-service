@@ -69,7 +69,7 @@ export default class TalkController extends BaseController {
                 }
 
                 if (qdata.etime) {
-                    buildQuery.andWhere('talk.created_at <= :stime', { etime: qdata.etime });
+                    buildQuery.andWhere('talk.created_at <= :etime', { etime: qdata.etime });
                 }
 
                 if (qdata.waitingOperator && qdata.waitingTime && !isNaN(qdata.waitingTime)) {
@@ -143,6 +143,13 @@ export default class TalkController extends BaseController {
             rows: rows.map((row) => ({
                 ...row,
                 content: row.getContent(),
+                user: row.user
+                    ? {
+                          id: row.user.id,
+                          name: row.user.name,
+                          imageUrl: row.user.imageUrl,
+                      }
+                    : null,
             })),
             talks,
             remaining: Math.max(remaining, 0),
@@ -196,6 +203,13 @@ export default class TalkController extends BaseController {
             rows: rows.map((row) => ({
                 ...row,
                 content: row.getContent(),
+                user: row.user
+                    ? {
+                          id: row.user.id,
+                          name: row.user.name,
+                          imageUrl: row.user.imageUrl,
+                      }
+                    : null,
             })),
             talks,
             remaining: Math.max(remaining, 0),
