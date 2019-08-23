@@ -44,9 +44,8 @@ export default class ArticleController extends BaseController {
         const query = await getConnection()
             .getRepository(Article)
             .createQueryBuilder()
-            .where(`company_id = :cid AND (user_id = :uid OR auto_send IN ('start', 'connected'))`, values)
+            .where(`company_id = :cid AND (user_id = :uid OR auto_send = 'connected')`, values)
             .orderBy('odr');
-
 
         const rows = await query.getMany();
         this.response.send(rows);

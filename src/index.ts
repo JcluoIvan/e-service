@@ -36,7 +36,7 @@ server.listen(process.env.PORT, () => {
     onServerStart().catch((err) => logger.error(err));
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 app.set('view options', { layout: false });
 
 /** web */

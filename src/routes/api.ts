@@ -46,6 +46,8 @@ router.post('/talks/:tid/messages/:mid/delete', handleTalk(async (ctrl) => await
 
 const handlePersonal = handlerController(PersonalController);
 router.get('/personal', handlePersonal(async (ctrl) => await ctrl.getData()));
+router.post('/personal/update/name', handlePersonal(async (ctrl) => await ctrl.updateName()));
+router.post('/personal/update/password', handlePersonal(async (ctrl) => await ctrl.updatePassword()));
 router.post('/personal/update/profile', handlePersonal(async (ctrl) => await ctrl.updateProfile()));
 
 export default router;

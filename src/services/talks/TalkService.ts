@@ -38,9 +38,9 @@ export default class CenterService extends BaseService {
 
     private loopQueues: RoomService[] = [];
 
-    private autoSendConnecteds: string[] = [];
+    private autoSendConnecteds: Article[] = [];
 
-    private autoSendStarts: string[] = [];
+    private autoSendStarts: Article[] = [];
 
     get rooms() {
         return Array.from(this.mapRooms.values());
@@ -87,6 +87,7 @@ export default class CenterService extends BaseService {
             .createQueryBuilder(Article, 'article')
             .select('article.content')
             .addSelect('article.autoSend')
+            .addSelect('article.userId')
             .where('auto_send IN (:...autoSend) and company_id = :companyId', {
                 autoSend: ['connected', 'start'],
                 companyId: this.userService.company.id,
@@ -94,8 +95,8 @@ export default class CenterService extends BaseService {
             .getMany();
         logger.warn(rows);
 
-        this.autoSendConnecteds = rows.filter((r) => r.autoSend === AutoSend.Connected).map((r) => r.content);
-        this.autoSendStarts = rows.filter((r) => r.autoSend === AutoSend.Start).map((r) => r.content);
+        this.autoSendConnecteds = rows.filter((r) => r.autoSend === AutoSend.Connected);
+        this.autoSendStarts = rows.filter((r) => r.autoSend === AutoSend.Start);
     }
     private async updateTalkShutdown() {
         return await getConnection()
@@ -134,8 +135,12 @@ export default class CenterService extends BaseService {
 
         /** 發送訊息 */
         ctoken.socket.on('talks/send', async (data, res) => {
-            const { id, content, time } = await talk.sendMessage(data, { type: FromType.Customer });
-            res(responseSuccess({ id, content, time }));
+            try {
+                const { id, content, time } = await talk.sendMessage(data, { type: FromType.Customer });
+                res(responseSuccess({ id, content, time }));
+            } catch (err) {
+                res(throwError(err));
+            }
         });
 
         ctoken.socket.on('disconnect', () => {
@@ -180,16 +185,22 @@ export default class CenterService extends BaseService {
 
         utoken.socket.on('talks/room-ready', (res) => sroom.ready());
         utoken.socket.on('talks/room-unready', (res) => sroom.unready());
-        utoken.socket.on('talks/talk-start', ({ talkId }) => {
+        utoken.socket.on('talks/talk-start', async ({ talkId }) => {
             try {
                 const talk = talkId ? this.getTalk(talkId) : this.talkQueues[0];
                 if (talk) {
-                    talk.start(utoken);
+                    await talk.start(utoken);
 
                     /** 對話開始後系統發送 start 類型文章  */
-                    this.autoSendStarts.forEach((message) => {
-                        talk.sendMessage({ content: message, type: 'text/plain' }, { type: FromType.System });
-                    });
+                    const from = {
+                        type: FromType.Service,
+                        userId: utoken.user.id,
+                    };
+                    this.autoSendStarts
+                        .filter((o) => o.userId === utoken.user.id)
+                        .forEach(async (article) => {
+                            await talk.sendMessage({ content: article.content, type: 'text/plain' }, from);
+                        });
                 }
             } catch (err) {
                 utoken.socket.emit('message/error', err.message);
@@ -205,7 +216,6 @@ export default class CenterService extends BaseService {
                 }
 
                 talk.transferTo(tUser);
-
             } catch (err) {
                 utoken.socket.emit('message/error', err.message);
             }
@@ -253,9 +263,9 @@ export default class CenterService extends BaseService {
     }
 
     private async findOrCreateTalk(ctoken: CustomerToken) {
-        const find = this.talks.find((t) => t.cutoken.customer.id === ctoken.customer.id);
+        const find = this.talks.find((t) => t.ctoken.customer.id === ctoken.customer.id);
         if (find) {
-            find.onReconnected();
+            find.onReconnected(ctoken);
             return find;
         }
 
@@ -266,8 +276,8 @@ export default class CenterService extends BaseService {
         this.mapTalks.set(talk.id, talk);
 
         /* 訪客連線後系統發送 connected 類型文章 */
-        this.autoSendConnecteds.forEach((message) => {
-            talk.sendMessage({ content: message, type: 'text/plain' }, { type: FromType.System });
+        this.autoSendConnecteds.forEach((article) => {
+            talk.sendMessage({ content: article.content, type: 'text/plain' }, { type: FromType.System });
         });
 
         return talk;

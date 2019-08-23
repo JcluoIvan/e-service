@@ -11,7 +11,7 @@ import { Message, MessageType } from '../entity/Message';
 import { MessageRepository } from '../repository/MessageRepository';
 import { Talk } from '../entity/Talk';
 import { TalkNotFoundError } from '../exceptions/center.error';
-import { UnauthorizedEditMessageError } from '../exceptions/talk.error';
+import { UnauthorizedEditMessageError, MessageNotFoundError } from '../exceptions/talk.error';
 
 const existsTalk = async (companyId: number, talkId: number) => {
     const nums = await getConnection()
@@ -256,7 +256,7 @@ export default class TalkController extends BaseController {
 
         const isExists = await existsMessage(cid, tid, mid);
         if (!isExists) {
-            throw new TalkNotFoundError();
+            throw new MessageNotFoundError();
         }
 
         await getConnection()

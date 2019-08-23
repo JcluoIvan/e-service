@@ -30,12 +30,7 @@ export default class PersonalController extends BaseController {
         const filename = `${fname}.jpg`;
         const filepath = path.join(process.env.USER__IMAGE_UPLOAD_PATH, filename);
 
-        const user = await getConnection()
-            .getCustomRepository(UserRepository)
-            .findUser(this.user.id, this.user.companyId);
-        if (!user) {
-            throw new UserNotFoundError();
-        }
+        const user = this.user;
 
         const exists = await fileExists(filepath);
         if (!exists) {
@@ -51,6 +46,24 @@ export default class PersonalController extends BaseController {
             });
         }
         user.image = filename;
+        await user.save();
+        this.user.reload();
+        this.response.sendStatus(StatusCode.NoContent);
+    }
+
+    public async updateName() {
+        const name: string = this.request.body.name;
+        const user = this.user;
+        user.name = name;
+        await user.save();
+        this.user.reload();
+        this.response.sendStatus(StatusCode.NoContent);
+    }
+
+    public async updatePassword() {
+        const password: string = this.request.body.password;
+        const user = this.user;
+        user.setPassword(password);
         await user.save();
         this.user.reload();
         this.response.sendStatus(StatusCode.NoContent);

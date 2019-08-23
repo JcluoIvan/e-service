@@ -21,7 +21,7 @@ export default class UserController extends BaseController {
 
     public async listUser() {
         const queryData = this.request.query || {};
-        const rows = await getConnection()
+        const paginate = await getConnection()
             .getCustomRepository(UserRepository)
             .paginate('user', queryData, (buildQuery) => {
                 buildQuery.where('company_id = :cid', { cid: this.user.companyId }).addOrderBy('id', 'ASC');
@@ -31,7 +31,15 @@ export default class UserController extends BaseController {
                 }
             });
 
-        this.response.send(rows);
+        this.response.send({
+            ...paginate,
+            rows: paginate.rows.map((row) => {
+                return {
+                    ...row,
+                    imageUrl: row.imageUrl,
+                };
+            }),
+        });
     }
 
     public async saveUser() {

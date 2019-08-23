@@ -58,7 +58,7 @@ export default class CustomerRoom extends EventEmitter {
         return this.talk.id;
     }
 
-    get cutoken() {
+    get ctoken() {
         return this.data.customer;
     }
 
@@ -88,7 +88,7 @@ export default class CustomerRoom extends EventEmitter {
     }
 
     get isOnline() {
-        return this.cutoken.isOnline;
+        return this.ctoken.isOnline;
     }
 
     get watchers() {
@@ -153,7 +153,7 @@ export default class CustomerRoom extends EventEmitter {
 
         this.talk = await this.talk.save();
         this.data.executive = executive;
-        this.cutoken.socket.emit('talks/start', {
+        this.ctoken.socket.emit('talks/start', {
             executive: info,
             messages: this.data.messages,
             startAt: moment().valueOf(),
@@ -182,7 +182,7 @@ export default class CustomerRoom extends EventEmitter {
         this.talk = await this.talk.save();
 
         this.data.executive = executive;
-        this.cutoken.socket.emit('talks/start', {
+        this.ctoken.socket.emit('talks/start', {
             executive: info,
             messages: this.data.messages,
             startAt: moment().valueOf(),
@@ -213,10 +213,12 @@ export default class CustomerRoom extends EventEmitter {
         switch (data.type) {
             case 'image/jpeg':
                 messageEntity.content = await this.uploadImage(data.content, 'jpg');
+                console.warn('image --- uploaded');
                 messageEntity.type = MessageType.Image;
                 break;
             case 'image/png':
                 messageEntity.content = await this.uploadImage(data.content, 'png');
+                console.warn('image --- uploaded');
                 messageEntity.type = MessageType.Image;
                 break;
             default:
@@ -242,7 +244,7 @@ export default class CustomerRoom extends EventEmitter {
 
         this.data.messages = [cacheMessage, ...this.data.messages].slice(0, this.limitMessage);
 
-        this.cutoken.socket.emit('talks/message', cacheMessage);
+        this.ctoken.socket.emit('talks/message', cacheMessage);
         this.allUsers.forEach((u) => {
             u.socket.emit('talks/message', cacheMessage);
         });
@@ -302,8 +304,12 @@ export default class CustomerRoom extends EventEmitter {
                 /* 縮圖 */
                 const minpath = path.join(process.env.MESSAGE__IMAGE_UPLOAD_PATH, `${fname}.min.${ext}`);
                 const image = await jimp.read(filepath);
-                image.scaleToFit(240, 240).write(minpath, (e) => logger.error(e));
-                resolve(filename);
+                image.scaleToFit(240, 240).write(minpath, (e) => {
+                    if (e) {
+                        logger.error(e);
+                    }
+                    resolve(filename);
+                });
             });
         });
     }
@@ -311,9 +317,9 @@ export default class CustomerRoom extends EventEmitter {
     public toJson(): IES.Talks.Talk {
         return {
             id: this.id,
-            name: this.cutoken.customer.name,
-            ip: this.cutoken.ip,
-            online: this.cutoken.isOnline,
+            name: this.ctoken.customer.name,
+            ip: this.ctoken.ip,
+            online: this.ctoken.isOnline,
             status: this.talk.status,
             executive: toUserInfo(this.executive),
             startAt: this.talk.intStartAt,
@@ -327,9 +333,9 @@ export default class CustomerRoom extends EventEmitter {
         const watchers = (utoken && this.data.watchers.filter((w) => w.user.id === utoken.user.id)) || [];
         return {
             id: this.id,
-            name: this.cutoken.customer.name,
-            ip: this.cutoken.ip,
-            online: this.cutoken.isOnline,
+            name: this.ctoken.customer.name,
+            ip: this.ctoken.ip,
+            online: this.ctoken.isOnline,
             executive: toUserInfo(this.executive),
             status: this.talk.status,
             startAt: this.talk.intStartAt,
@@ -343,8 +349,8 @@ export default class CustomerRoom extends EventEmitter {
     public toJsonForCustomer(): IES.Talks.TalkForCustomer {
         return {
             id: this.id,
-            name: this.cutoken.customer.name,
-            online: this.cutoken.isOnline,
+            name: this.ctoken.customer.name,
+            online: this.ctoken.isOnline,
             executive: toUserInfo(this.executive),
             startAt: this.talk.intStartAt,
             createdAt: this.talk.intCreatedAt,
@@ -352,10 +358,11 @@ export default class CustomerRoom extends EventEmitter {
         };
     }
 
-    public onReconnected() {
+    public onReconnected(ctoken: CustomerToken) {
+        this.data.customer = ctoken;
         this.data.disconnectedAt = 0;
         this.clearDestroyTimer();
-        this.cutoken.socket.emit('talks/talk', this.toJsonForCustomer());
+        this.ctoken.socket.emit('talks/talk', this.toJsonForCustomer());
         this.nsp.emit('talks/talk-online', { talkId: this.id });
     }
 
@@ -372,7 +379,7 @@ export default class CustomerRoom extends EventEmitter {
 
     public async close() {
         const closedAt = moment();
-        this.cutoken.socket.disconnect();
+        this.ctoken.socket.disconnect();
         this.emit('close');
 
         this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
