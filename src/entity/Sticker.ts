@@ -8,16 +8,11 @@ import {
     Unique,
     BaseEntity,
 } from 'typeorm';
-
-export enum AutoSend {
-    None = 'none',
-    Connected = 'connected',
-    Start = 'start',
-    Pause = 'pause',
-}
+import logger from '../config/logger';
+import { Article } from './Article';
 
 @Entity()
-export class Article extends BaseEntity {
+export class Sticker extends BaseEntity {
     @PrimaryGeneratedColumn({
         unsigned: true,
     })
@@ -31,12 +26,6 @@ export class Article extends BaseEntity {
     public companyId!: number;
 
     @Column({
-        type: 'varchar',
-        length: 50,
-    })
-    public name!: string;
-
-    @Column({
         name: 'user_id',
         type: 'int',
         unsigned: true,
@@ -45,30 +34,13 @@ export class Article extends BaseEntity {
 
     @Column({
         type: 'varchar',
-        length: 20,
+        length: 50,
     })
-    public key!: string;
+    public image!: string;
 
-    @Column({
-        type: 'varchar',
-        length: 200,
-    })
-    public content!: string;
-
-    @Column({
-        name: 'auto_send',
-        type: 'enum',
-        enum: AutoSend,
-        default: AutoSend.None,
-    })
-    public autoSend!: AutoSend;
-
-    /**
-     * 順序
-     */
     @Column({
         type: 'int',
-        default: 0,
+        unsigned: true,
     })
     public odr!: number;
 
@@ -87,4 +59,10 @@ export class Article extends BaseEntity {
         type: 'datetime',
     })
     public createdAt!: string;
+
+    public exists!: Sticker[];
+
+    get imageUrl() {
+        return this.image ? `${process.env.STICKER__URL}/${this.image}` : '';
+    }
 }

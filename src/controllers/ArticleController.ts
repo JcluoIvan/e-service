@@ -14,6 +14,7 @@ const getAutoSend = (autoSend: any, def = AutoSend.None): AutoSend => {
             [AutoSend.None]: AutoSend.None,
             [AutoSend.Start]: AutoSend.Start,
             [AutoSend.Connected]: AutoSend.Connected,
+            [AutoSend.Pause]: AutoSend.Pause,
         }[autoSend as AutoSend] || def
     );
 };
@@ -46,6 +47,10 @@ export default class ArticleController extends BaseController {
             .createQueryBuilder()
             .where(`company_id = :cid AND (user_id = :uid OR auto_send = 'connected')`, values)
             .orderBy('odr');
+        const autoSends = queryData.autoSends;
+        if (autoSends) {
+            query.andWhere('auto_send IN (:...autos)', { autos: autoSends });
+        }
 
         const rows = await query.getMany();
         this.response.send(rows);
@@ -70,7 +75,6 @@ export default class ArticleController extends BaseController {
             articleEntity.autoSend = autoSend;
             articleEntity.name = data.name;
             articleEntity.content = data.content;
-            articleEntity.share = data.share;
             const article = await articleEntity.save();
             await getConnection()
                 .getCustomRepository(ArticleRepository)
@@ -86,7 +90,6 @@ export default class ArticleController extends BaseController {
             articleEntity.key = data.key;
             articleEntity.name = data.name;
             articleEntity.content = data.content;
-            articleEntity.share = data.share;
             const article = await articleEntity.save();
             await getConnection()
                 .getCustomRepository(ArticleRepository)
@@ -120,7 +123,6 @@ export default class ArticleController extends BaseController {
             await article.reload();
             eventArticle.emit('save.after', article);
             res.odr = article.odr;
-            logger.warn(`odr = ${article.odr}`);
             res.autoSend = article.autoSend;
         }
         this.response.send(res);

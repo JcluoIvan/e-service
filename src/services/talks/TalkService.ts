@@ -42,6 +42,10 @@ export default class CenterService extends BaseService {
 
     private autoSendStarts: Article[] = [];
 
+    private autoSendPauses: Article[] = [];
+
+    private pause = false;
+
     get rooms() {
         return Array.from(this.mapRooms.values());
     }
@@ -89,15 +93,28 @@ export default class CenterService extends BaseService {
             .addSelect('article.autoSend')
             .addSelect('article.userId')
             .where('auto_send IN (:...autoSend) and company_id = :companyId', {
-                autoSend: ['connected', 'start'],
+                autoSend: [AutoSend.Connected, AutoSend.Start, AutoSend.Pause],
                 companyId: this.userService.company.id,
             })
             .getMany();
-        logger.warn(rows);
-
-        this.autoSendConnecteds = rows.filter((r) => r.autoSend === AutoSend.Connected);
-        this.autoSendStarts = rows.filter((r) => r.autoSend === AutoSend.Start);
+        this.autoSendConnecteds = [];
+        this.autoSendStarts = [];
+        this.autoSendPauses = [];
+        rows.forEach((r) => {
+            switch (r.autoSend) {
+                case AutoSend.Connected:
+                    this.autoSendConnecteds.push(r);
+                    break;
+                case AutoSend.Start:
+                    this.autoSendStarts.push(r);
+                    break;
+                case AutoSend.Pause:
+                    this.autoSendPauses.push(r);
+                    break;
+            }
+        });
     }
+
     private async updateTalkShutdown() {
         return await getConnection()
             .createQueryBuilder(Talk, 'talk')
@@ -183,6 +200,11 @@ export default class CenterService extends BaseService {
             }
         });
 
+        utoken.socket.on('talks/pause:toggle', (res) => {
+            this.pause = res === true;
+            this.userService.nsp.emit('talks/pause:toggle', this.pause);
+        });
+
         utoken.socket.on('talks/room-ready', (res) => sroom.ready());
         utoken.socket.on('talks/room-unready', (res) => sroom.unready());
         utoken.socket.on('talks/talk-start', async ({ talkId }) => {
@@ -229,7 +251,6 @@ export default class CenterService extends BaseService {
         });
 
         utoken.socket.on('disconnect', () => {
-            logger.error(utoken.isOnline);
             this.talks.forEach((talk) => {
                 if (talk.executive && talk.executive.user.id === utoken.user.id) {
                     talk.updateExecutive();
@@ -275,10 +296,17 @@ export default class CenterService extends BaseService {
         });
         this.mapTalks.set(talk.id, talk);
 
-        /* 訪客連線後系統發送 connected 類型文章 */
-        this.autoSendConnecteds.forEach((article) => {
-            talk.sendMessage({ content: article.content, type: 'text/plain' }, { type: FromType.System });
-        });
+        /* 系統暫停中, 發送 pause 類型文章 */
+        if (this.pause) {
+            this.autoSendPauses.forEach((ar) => {
+                talk.sendMessage({ content: ar.content, type: 'text/plain' }, { type: FromType.System });
+            });
+        } else {
+            /* 訪客連線後系統發送 connected 類型文章 */
+            this.autoSendConnecteds.forEach((article) => {
+                talk.sendMessage({ content: article.content, type: 'text/plain' }, { type: FromType.System });
+            });
+        }
 
         return talk;
     }

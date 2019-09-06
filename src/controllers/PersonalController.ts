@@ -36,7 +36,7 @@ export default class PersonalController extends BaseController {
         if (!exists) {
             const base64Data = profile.replace(/^data:image\/(png|jpeg);base64,/, '');
             await new Promise((resolve, reject) => {
-                fs.writeFile(filepath, base64Data, 'base64', async (err) => {
+                fs.writeFile(filepath, base64Data, 'base64', (err) => {
                     if (err) {
                         reject(err);
                         return;

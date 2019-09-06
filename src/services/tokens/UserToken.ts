@@ -109,7 +109,6 @@ export default class UserToken extends EventEmitter {
     }
 
     public destroy() {
-        logger.error(`user destroy : ${this.user.username}`);
         this.emit('destroy');
         this.destroyTimes = null;
         this.removeAllListeners();

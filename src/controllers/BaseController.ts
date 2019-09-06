@@ -40,7 +40,6 @@ export default class BaseController {
             throw new Error(`not found cp > ${cid}`);
         }
 
-
         // const utoken = cp && cp.userService.users[0] || null;
 
         const utoken = (cp && cp.userService.findByToken(token)) || null;

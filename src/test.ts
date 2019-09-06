@@ -11,7 +11,6 @@ import logger from './config/logger';
                 logger.error(err);
                 return;
             }
-            logger.info('success');
         },
     );
 })();

@@ -25,7 +25,6 @@ export default class BaseRepository<T> extends Repository<T> {
         }
         cb(queryBuilder);
         const total = await queryBuilder.getCount();
-        logger.warn(`offset = ${(page - 1) * size}`);
         const rows = await queryBuilder
             .skip((page - 1) * size)
             .take(size)

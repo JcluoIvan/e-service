@@ -73,7 +73,6 @@ export default class TalkController extends BaseController {
                 }
 
                 if (qdata.waitingOperator && qdata.waitingTime && !isNaN(qdata.waitingTime)) {
-                    logger.warn('wt > ', qdata.waitingTime);
                     const whereSql =
                         qdata.waitingOperator === 'above' ? 'talk.time_waiting >= :time' : 'talk.time_waiting <= :time';
                     buildQuery.andWhere(whereSql, {

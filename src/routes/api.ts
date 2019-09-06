@@ -6,6 +6,7 @@ import UserController from '../controllers/UserController';
 import TalkController from '../controllers/TalkController';
 import OptionController from '../controllers/OptionController';
 import PersonalController from '../controllers/PersonalController';
+import StickerController from '../controllers/StickerController';
 
 const router = Router();
 
@@ -49,5 +50,12 @@ router.get('/personal', handlePersonal(async (ctrl) => await ctrl.getData()));
 router.post('/personal/update/name', handlePersonal(async (ctrl) => await ctrl.updateName()));
 router.post('/personal/update/password', handlePersonal(async (ctrl) => await ctrl.updatePassword()));
 router.post('/personal/update/profile', handlePersonal(async (ctrl) => await ctrl.updateProfile()));
+
+const handleSticker = handlerController(StickerController);
+router.get('/stickers', handleSticker(async (ctrl) => await ctrl.allSticker()));
+router.post('/stickers/:sid/add', handleSticker(async (ctrl) => await ctrl.addSticker()));
+router.post('/stickers/:sid/move', handleSticker(async (ctrl) => await ctrl.moveSticker()));
+router.post('/stickers/:sid/delete', handleSticker(async (ctrl) => await ctrl.deleteSticker()));
+router.post('/stickers/:sid/clone', handleSticker(async (ctrl) => await ctrl.cloneSticker()));
 
 export default router;

@@ -12,6 +12,9 @@ import * as jimp from 'jimp';
 import logger from '../../config/logger';
 import { fileExists } from '../../support/file';
 import { setTimeout, clearTimeout } from 'timers';
+import { getConnection } from 'typeorm';
+import { Sticker } from '../../entity/Sticker';
+import { FailedError } from '../../exceptions/failed.error';
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
@@ -22,7 +25,7 @@ const CLOSE_DELAY = 10 * 1000;
 
 interface SendMessageData {
     content: string;
-    type: 'text/plain' | 'image/jpeg' | 'image/png';
+    type: 'text/plain' | 'image/jpeg' | 'image/png' | 'sticker';
 }
 
 interface Data {
@@ -48,6 +51,17 @@ const toUserInfo = (utoken: UserToken | null): IUser.Socket.EmitterData.UserInfo
               imageUrl: '',
               online: false,
           };
+};
+
+const findSticker = async (sid: number) => {
+    const sticker = await getConnection()
+        .createQueryBuilder(Sticker, 'sticker')
+        .where('id = :sid', { sid })
+        .getOne();
+    if (!sticker) {
+        throw new FailedError('sticket not found');
+    }
+    return sticker;
 };
 
 /**
@@ -213,14 +227,18 @@ export default class CustomerRoom extends EventEmitter {
         switch (data.type) {
             case 'image/jpeg':
                 messageEntity.content = await this.uploadImage(data.content, 'jpg');
-                console.warn('image --- uploaded');
                 messageEntity.type = MessageType.Image;
                 break;
             case 'image/png':
                 messageEntity.content = await this.uploadImage(data.content, 'png');
-                console.warn('image --- uploaded');
                 messageEntity.type = MessageType.Image;
                 break;
+            case 'sticker':
+                const sticker = await findSticker(Number(data.content));
+                messageEntity.content = sticker.image;
+                messageEntity.type = MessageType.Sticker;
+                break;
+
             default:
                 messageEntity.content = data.content;
                 messageEntity.type = MessageType.Text;
@@ -289,28 +307,33 @@ export default class CustomerRoom extends EventEmitter {
             const filepath = path.join(process.env.MESSAGE__IMAGE_UPLOAD_PATH, filename);
 
             const exists = await fileExists(filepath);
-            if (exists) {
-                resolve(filename);
-                return;
+            if (!exists) {
+                const base64Data = data.replace(/^data:image\/(png|jpeg);base64,/, '');
+                await new Promise((imgPromise) => {
+                    fs.writeFile(filepath, base64Data, 'base64', async (err) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        imgPromise();
+                    });
+                });
             }
 
-            const base64Data = data.replace(/^data:image\/(png|jpeg);base64,/, '');
-            fs.writeFile(filepath, base64Data, 'base64', async (err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
-                /* 縮圖 */
-                const minpath = path.join(process.env.MESSAGE__IMAGE_UPLOAD_PATH, `${fname}.min.${ext}`);
+            /* 縮圖 */
+            const minpath = path.join(process.env.MESSAGE__IMAGE_UPLOAD_PATH, `${fname}.min.${ext}`);
+            const minExists = await fileExists(minpath);
+            if (!minExists) {
                 const image = await jimp.read(filepath);
-                image.scaleToFit(240, 240).write(minpath, (e) => {
+                const size = Math.min(image.getWidth(), image.getHeight()) < 240 ? 80 : 240;
+                image.scaleToFit(size, size).write(minpath, (e) => {
                     if (e) {
                         logger.error(e);
                     }
-                    resolve(filename);
                 });
-            });
+            }
+
+            resolve(filename);
         });
     }
 
@@ -400,7 +423,6 @@ export default class CustomerRoom extends EventEmitter {
     }
 
     public updateExecutive() {
-        logger.info('update executive');
         this.nsp.emit('talks/talk-executive', { talkId: this.id, executive: toUserInfo(this.executive) });
     }
 

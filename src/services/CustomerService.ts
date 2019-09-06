@@ -50,7 +50,6 @@ export default class CustomerService extends EventEmitter {
             this.emit('connect', { ctoken });
 
             socket.emit('customer-key', { key: ctoken.customer.key });
-            logger.error('key ==== ', key, ', response ==== ', ctoken.customer.key);
         });
     }
 

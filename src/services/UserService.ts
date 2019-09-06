@@ -61,7 +61,6 @@ export default class UserService extends EventEmitter {
 
         nsp.on('connect', async (socket: IUser.Socket) => {
             socket.on('login', async ({ username, password, token }, res) => {
-                logger.info('do - login', { username, password });
 
                 try {
                     const utoken = await this.findUserToken(socket, { username, password, token });
@@ -97,7 +96,6 @@ export default class UserService extends EventEmitter {
     }
 
     public findByToken(token: string) {
-        logger.warn(`find token = ${token}`, this.users.map((u) => u.token));
         return this.users.find((u) => u.token === token) || null;
     }
 

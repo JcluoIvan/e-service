@@ -13,8 +13,6 @@ import { ValidationError } from './exceptions/validation.error';
 import { Article } from './entity/Article';
 config();
 
-logger.info('msg = ', process.env.MESSAGE);
-
 const app = express();
 const server = http.createServer(app);
 const io = socketio().listen(server);

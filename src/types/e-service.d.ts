@@ -3,6 +3,8 @@ declare namespace NodeJS {
         PORT: string;
         MESSAGE__IMAGE_UPLOAD_PATH: string;
         MESSAGE__IMAGE_URL: string;
+        STICKER__UPLOAD_PATH: string;
+        STICKER__URL: string;
         USER__IMAGE_UPLOAD_PATH: string;
         USER__IMAGE_URL: string;
     }
@@ -49,7 +51,7 @@ declare namespace IES {
             fromType: 'system' | 'service' | 'customer';
             user: IES.UserInfo;
             content: string;
-            type: 'text' | 'image';
+            type: 'text' | 'image' | 'sticker';
             time: number;
         }
     }
@@ -188,6 +190,8 @@ declare namespace IUser {
 
             (event: 'message/error', data: { message: string }): boolean;
 
+            (event: 'talks/pause:toggle', data: boolean): boolean;
+
             (event: 'talks/talks', data: EmitterData.Center.Talk[]): boolean;
 
             (event: 'talks/talk', data: EmitterData.Center.Talk): boolean;
@@ -252,6 +256,8 @@ declare namespace IUser {
             (event: 'login', listener: ISK.ListenerHandle<ListenerData.Login.Request, ListenerData.Login.Response>): T;
 
             // (event: 'customer/join', listener: (data: { id?: string; name: string }, response: () => void) => void): T;
+
+            (event: 'talks/pause:toggle', listener: ISK.ListenerHandle<boolean>): T;
 
             (event: 'talks/talk-lock', listener: ISK.ListenerHandle<number>): T;
             (event: 'talks/talk-unlock', listener: ISK.ListenerHandle<number>): T;

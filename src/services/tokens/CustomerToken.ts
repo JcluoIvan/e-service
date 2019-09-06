@@ -54,7 +54,6 @@ export default class CustomerToken extends EventEmitter {
     }
 
     public static async createCustomerToken(socket: ICustomer.Socket, data: CustomerData) {
-        logger.error('key = ', data.key);
         const find = data.key
             ? await getConnection()
                   .createQueryBuilder(Customer, 'customer')

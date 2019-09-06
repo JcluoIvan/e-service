@@ -7,6 +7,9 @@ export enum MessageType {
 
     /* 圖片 */
     Image = 'image',
+
+    /* 貼圖 */
+    Sticker = 'sticker',
 }
 
 export enum FromType {
@@ -80,6 +83,13 @@ export class Message extends BaseEntity {
     public user!: User;
 
     public getContent() {
-        return this.type === MessageType.Image ? `${process.env.MESSAGE__IMAGE_URL}/${this.content}` : this.content;
+        switch (this.type) {
+            case MessageType.Image:
+                return `${process.env.MESSAGE__IMAGE_URL}/${this.content}`;
+            case MessageType.Sticker:
+                return `${process.env.STICKER__URL}/${this.content}`;
+            default:
+                return this.content;
+        }
     }
 }
