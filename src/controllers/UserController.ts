@@ -73,6 +73,7 @@ export default class UserController extends BaseController {
             userEntity.username = data.username;
             userEntity.name = data.name;
             userEntity.companyId = cid;
+            userEntity.role = data.role;
             userEntity.setPassword(data.password);
             const user = await userEntity.save();
             lastId = user.id;
