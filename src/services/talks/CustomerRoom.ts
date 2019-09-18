@@ -209,20 +209,24 @@ export default class CustomerRoom extends EventEmitter {
         });
     }
 
-    public async sendMessage(data: SendMessageData, from: { type: FromType; userId?: number }) {
+    public async sendMessage(data: SendMessageData, from: { type: FromType; utoken?: UserToken }) {
         const time = moment();
         const isFromUser = from.type === FromType.Service;
+        const utoken = from.utoken;
 
-        const user = isFromUser ? this.allUsers.find((u) => u.user.id === from.userId) : null;
-        if (isFromUser && !user) {
-            throw new NotInTalkError();
-        }
+        // const user = isFromUser ? this.allUsers.find((u) => u.user.id === from.userId) : null;
+        // if (isFromUser && !user) {
+        //     throw new NotInTalkError();
+        // }
+        // if (!utoken) {
+        //     throw new NotInTalkError();
+        // }
 
         const messageEntity = new Message();
         messageEntity.talkId = this.id;
         messageEntity.fromType = from.type;
         messageEntity.createdAt = time.format('YYYY-MM-DD HH:mm:ss');
-        messageEntity.userId = from.userId || 0;
+        messageEntity.userId = (utoken && utoken.user.id) || 0;
 
         switch (data.type) {
             case 'image/jpeg':
@@ -254,9 +258,9 @@ export default class CustomerRoom extends EventEmitter {
             time: time.valueOf(),
             type: message.type,
             user: {
-                id: user ? user.user.id : 0,
-                name: user ? user.user.name : '',
-                imageUrl: user ? user.user.imageUrl : '',
+                id: utoken ? utoken.user.id : 0,
+                name: utoken ? utoken.user.name : '',
+                imageUrl: utoken ? utoken.user.imageUrl : '',
             },
         };
 

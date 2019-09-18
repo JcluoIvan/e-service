@@ -40,12 +40,13 @@ export default class ArticleController extends BaseController {
         const values = {
             cid: this.user.companyId,
             uid: queryData.userId || 0,
+            autoSend: [AutoSend.Connected, AutoSend.Pause],
         };
 
         const query = await getConnection()
             .getRepository(Article)
             .createQueryBuilder()
-            .where(`company_id = :cid AND (user_id = :uid OR auto_send = 'connected')`, values)
+            .where(`company_id = :cid AND (user_id = :uid OR auto_send IN (:...autoSend))`, values)
             .orderBy('odr');
         const autoSends = queryData.autoSends;
         if (autoSends) {

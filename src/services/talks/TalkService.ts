@@ -192,7 +192,7 @@ export default class CenterService extends BaseService {
                 const talk = this.getTalk(data.talkId);
                 const { id, content, time } = await talk.sendMessage(data, {
                     type: FromType.Service,
-                    userId: utoken.user.id,
+                    utoken,
                 });
                 res(responseSuccess({ id, content, time }));
             } catch (err) {
@@ -245,7 +245,7 @@ export default class CenterService extends BaseService {
 
         utoken.socket.on('talks/talk-close', (data) => {
             const talk = this.mapTalks.get(data.talkId);
-            if (talk && talk.executive && talk.executive.user.id === utoken.user.id) {
+            if (talk && talk.executive) {
                 talk.close();
             }
         });
