@@ -1,6 +1,6 @@
 import { User, UserRole } from '../entity/User';
 import { getConnection } from 'typeorm';
-import { LoginFailedError } from '../exceptions/login.errors';
+import { LoginFailedError, UserDisabledError } from '../exceptions/login.errors';
 import { responseSuccess, throwError } from '../support';
 import logger from '../config/logger';
 import { EventEmitter } from 'events';
@@ -8,6 +8,7 @@ import UserToken from './tokens/UserToken';
 import { Company } from '../entity/Company';
 import * as moment from 'moment';
 import { ResponseCode } from '../exceptions';
+import { eventUser } from '../events/event-user';
 
 // interface EmitterEvents {
 //     (event: string | symbol, ...args: any[]): boolean;
@@ -89,6 +90,15 @@ export default class UserService extends EventEmitter {
                 this.broadcastUsers();
             });
         });
+
+        /* listener 登出事件 (包含修改密碼、修改啟/停用) */
+        eventUser.on('logout', (user) => {
+            const find = this.findById(user.id);
+            console.info(user.id, user.username);
+            if (find) {
+                find.logout();
+            }
+        });
     }
 
     public findById(id: number) {
@@ -126,11 +136,16 @@ export default class UserService extends EventEmitter {
                 throw new LoginFailedError();
             }
 
+            if (!user.enabled) {
+                throw new UserDisabledError();
+            }
+
             const utoken = new UserToken(socket, user);
             utoken.on('destroy', () => {
                 this.data.users.delete(user.id);
             });
             this.data.users.set(user.id, utoken);
+
             return utoken;
         }
 

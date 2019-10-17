@@ -37,6 +37,9 @@ router.get('/users/:id', handleUser(async (ctrl) => await ctrl.findUser()));
 
 router.post('/users/:id/save', handleUser(async (ctrl) => await ctrl.saveUser()));
 
+router.post('/users/:id/password', handleUser(async (ctrl) => await ctrl.updatePassword()));
+router.post('/users/:id/toggle', handleUser(async (ctrl) => await ctrl.toggleEnabled()));
+
 const handleTalk = handlerController(TalkController);
 router.get('/talks', handleTalk(async (ctrl) => await ctrl.listTalks()));
 router.get('/talks/:tid', handleTalk(async (ctrl) => await ctrl.findTalk()));

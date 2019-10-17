@@ -1,9 +1,10 @@
 import { isObject, isString } from 'util';
 import { ValidationError } from '../exceptions/validation.error';
 import logger from '../config/logger';
+import { getConnection } from 'typeorm';
 
 // export const exists = ()
-export type ValidationFunction = (value: any, key: string, data: any) => true | string;
+export type ValidationFunction = (value: any, key: string, data: any) => Promise<true | string> | true | string;
 export interface ValidationSetting {
     [key: string]: ValidationFunction | ValidationFunction[];
 }
@@ -37,28 +38,48 @@ export const isIn = (enums: string[] | number[] | object): ValidationFunction =>
     return (value) => enumsArr.indexOf(value) >= 0 || '資料不正確';
 };
 
-export const isValid = (data: any, setting: ValidationSetting) => {
-    const errors: { [key: string]: string[] } = {};
-    Object.keys(setting).forEach((key) => {
-        const value = key in data ? data[key] : undefined;
-        const items: ValidationFunction[] = (Array.isArray(setting[key]) ? setting[key] : [setting[key]]) as any;
-        const errs: string[] = [];
-        items.every((item) => {
-            const { validator, args = [] } = 'validator' in item ? item : { validator: item };
-
-            const res = validator(value, key, data);
-            if (res !== true) {
-                errs.push(res);
-                return false;
-            }
-            return true;
-        });
-        if (errs.length > 0) {
-            errors[key] = errs;
+export const isExists = (table: string, col?: string, where?: string, values?: any): ValidationFunction => {
+    return async (value, key) => {
+        let sql = `SELECT count(1) AS c FROM \`${table}\` WHERE \`${key}\` = ? `;
+        if (where) {
+            sql += ` AND ${where}`;
         }
-    });
+        const res = values ? await getConnection().query(sql, values) : await getConnection().query(sql);
+        logger.info('xxx', res);
 
-    if (Object.keys(errors).length !== 0) {
-        throw new ValidationError().setErrors(errors);
-    }
+        return true as any;
+    };
+};
+
+export const isValid = async (data: any, setting: ValidationSetting) => {
+    return new Promise((resolve, reject) => {
+        const errors: { [key: string]: string[] } = {};
+        const allCheck = Object.keys(setting).map(async (key) => {
+            const value = key in data ? data[key] : undefined;
+            const items: ValidationFunction[] = (Array.isArray(setting[key]) ? setting[key] : [setting[key]]) as any;
+            const errs: string[] = [];
+
+            const checks = items.map(async (item) => {
+                const { validator, args = [] } = 'validator' in item ? item : { validator: item };
+
+                const res = await validator(value, key, data);
+                if (res !== true) {
+                    errs.push(res);
+                    return false;
+                }
+                return true;
+            });
+            Promise.all(checks).finally(() => {
+                if (errs.length > 0) {
+                    errors[key] = errs;
+                }
+            });
+        });
+
+        Promise.all(allCheck).finally(() => {
+            if (Object.keys(errors).length !== 0) {
+                reject(new ValidationError().setErrors(errors));
+            }
+        });
+    });
 };

@@ -73,6 +73,12 @@ export class User extends BaseEntity {
     })
     public token!: string | null;
 
+    @Column({
+        type: 'bool',
+        default: true,
+    })
+    public enabled!: boolean;
+
     @CreateDateColumn({
         name: 'updated_at',
         nullable: true,

@@ -13,3 +13,8 @@ export class AssignUserTokenError extends BaseError {
 export class UserNotFoundError extends BaseError {
     public message = 'user not found';
 }
+
+// tslint:disable-next-line:max-classes-per-file
+export class UserDisabledError extends BaseError {
+    public message = 'user is disabled';
+}
