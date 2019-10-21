@@ -21,7 +21,6 @@ interface ListenerEvents<T> {
 }
 
 const findByUsername = async (companyId: number, username: string) => {
-    const selects = ['id', 'password', 'username', 'name', 'role', 'company_id'];
     return await getConnection()
         .createQueryBuilder(User, 'user')
         .addSelect('user.password')
@@ -62,7 +61,6 @@ export default class UserService extends EventEmitter {
 
         nsp.on('connect', async (socket: IUser.Socket) => {
             socket.on('login', async ({ username, password, token }, res) => {
-
                 try {
                     const utoken = await this.findUserToken(socket, { username, password, token });
 
@@ -97,6 +95,7 @@ export default class UserService extends EventEmitter {
             console.info(user.id, user.username);
             if (find) {
                 find.logout();
+                find.destroy();
             }
         });
     }
@@ -124,10 +123,11 @@ export default class UserService extends EventEmitter {
     }
 
     private async findUserToken(socket: IUser.Socket, data: { username?: string; password?: string; token?: string }) {
-        if (data.username && data.password) {
+        if (data.username) {
             const find = this.users.find((u) => u.user.username === data.username);
+            logger.error(find);
             if (find) {
-                await find.login(socket, data.password);
+                await find.login(socket, data.password || '');
                 return find;
             }
 
@@ -136,11 +136,8 @@ export default class UserService extends EventEmitter {
                 throw new LoginFailedError();
             }
 
-            if (!user.enabled) {
-                throw new UserDisabledError();
-            }
-
-            const utoken = new UserToken(socket, user);
+            const utoken = new UserToken(user);
+            await utoken.login(socket, data.password || '');
             utoken.on('destroy', () => {
                 this.data.users.delete(user.id);
             });

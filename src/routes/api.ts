@@ -7,8 +7,14 @@ import TalkController from '../controllers/TalkController';
 import OptionController from '../controllers/OptionController';
 import PersonalController from '../controllers/PersonalController';
 import StickerController from '../controllers/StickerController';
+import ClearTalkRecordController from '../controllers/ClearTalkRecordController';
+import ClearLoginRecordController from '../controllers/ClearLoginRecordController';
+import DemoController from '../controllers/DemoController';
 
 const router = Router();
+
+const handlerDemo = handlerController(DemoController, false);
+router.get('/demo', handlerDemo(async (ctrl) => await ctrl.index()));
 
 const handleOption = handlerController(OptionController);
 router.get('/option/users', handleOption(async (ctrl) => await ctrl.userOptions()));
@@ -39,6 +45,8 @@ router.post('/users/:id/save', handleUser(async (ctrl) => await ctrl.saveUser())
 
 router.post('/users/:id/password', handleUser(async (ctrl) => await ctrl.updatePassword()));
 router.post('/users/:id/toggle', handleUser(async (ctrl) => await ctrl.toggleEnabled()));
+router.get('/users/:id/log-login', handleUser(async (ctrl) => await ctrl.logLoginList()));
+router.post('/users/:id/reset-login-errors', handleUser(async (ctrl) => await ctrl.resetLoginErrors()));
 
 const handleTalk = handlerController(TalkController);
 router.get('/talks', handleTalk(async (ctrl) => await ctrl.listTalks()));
@@ -60,5 +68,13 @@ router.post('/stickers/:sid/add', handleSticker(async (ctrl) => await ctrl.addSt
 router.post('/stickers/:sid/move', handleSticker(async (ctrl) => await ctrl.moveSticker()));
 router.post('/stickers/:sid/delete', handleSticker(async (ctrl) => await ctrl.deleteSticker()));
 router.post('/stickers/:sid/clone', handleSticker(async (ctrl) => await ctrl.cloneSticker()));
+
+const handleTalkRecords = handlerController(ClearTalkRecordController);
+router.get('/clear-record/talk-records', handleTalkRecords(async (ctrl) => await ctrl.all()));
+router.post('/clear-record/talk-records/delete', handleTalkRecords(async (ctrl) => await ctrl.deleteRecords()));
+
+const handleLoginRecords = handlerController(ClearLoginRecordController);
+router.get('/clear-record/login-records', handleLoginRecords(async (ctrl) => await ctrl.all()));
+router.post('/clear-record/login-records/delete', handleLoginRecords(async (ctrl) => await ctrl.deleteRecords()));
 
 export default router;

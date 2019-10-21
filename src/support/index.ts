@@ -15,4 +15,16 @@ export const responseSuccess = <T = any>(data: T, message?: string): ISK.Respons
         message,
     };
 };
-export const ipAddress = (ip: string) => ip.replace(/^\:\:ffff\:/, '');
+export const ipAddress = (handshake: SocketIO.Handshake) => {
+    return (handshake.headers['x-forwarded-for'] || handshake.address).replace(/^\:\:ffff\:/, '');
+};
+
+export const ip2int = (ip: string) => {
+    // tslint:disable-next-line:no-bitwise
+    return ip.split('.').reduce((ipint: number, octet: string) => (ipint << 8) + Number(octet), 0) >>> 0;
+};
+
+export const int2ip = (ipint: number) => {
+    // tslint:disable-next-line:no-bitwise
+    return `${ipint >>> 24}.${(ipint >> 16) & 255}.${(ipint >> 8) & 255}.${ipint & 255}`;
+};

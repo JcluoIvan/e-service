@@ -8,6 +8,10 @@ import { UserRepository } from '../repository/UserRepository';
 import { isValid, isRequired, isMax, isMin, isIn, isWhen, isExists } from '../validations';
 import { ForbiddenError } from '../exceptions/auth.error';
 import { eventUser } from '../events/event-user';
+import { LogUserLogin } from '../entity/LogUserLogin';
+import { LogUserLoginRepository } from '../repository/LogUserLoginRepository';
+import { IpsRepository } from '../repository/IpsRepository';
+import moment = require('moment');
 
 export default class UserController extends BaseController {
     public async findUser() {
@@ -23,14 +27,20 @@ export default class UserController extends BaseController {
 
     public async listUser() {
         const queryData = this.request.query || {};
+        const user = this.user;
         const paginate = await getConnection()
             .getCustomRepository(UserRepository)
-            .paginate('user', queryData, (buildQuery) => {
-                buildQuery.where('company_id = :cid', { cid: this.user.companyId }).addOrderBy('id', 'ASC');
-                const role = queryData.role;
+            .listUsers(user, queryData, (buildQuery) => {
+                const role = user.isSupervisor ? queryData.role : UserRole.Executive;
                 if (role && role !== 'all') {
-                    buildQuery.andWhere('role = :role', { role: queryData.role });
+                    buildQuery.andWhere('role = :role', { role });
                 }
+            });
+        const rows = paginate.rows.map((row) => ({ row, ip: (row.logLast && row.logLast.ip) || null }));
+        await getConnection()
+            .getCustomRepository(IpsRepository)
+            .joinIps(rows, (ips, o) => {
+                o.row.ipInfo = ips;
             });
 
         this.response.send({
@@ -48,39 +58,47 @@ export default class UserController extends BaseController {
         const id = this.request.params.id;
         const data = this.request.body;
         const cid = this.user.companyId;
+        const now = moment().format('YYYY-MM-DD HH:mm:ss');
         let lastId = 0;
 
-        isValid(data, {
-            username: [isRequired(), isMin(4), isMax(20), isExists('user', 'username', `company_id = :cid `, { cid })],
+        this.checkUserIsSupervisor();
+
+        await isValid(data, {
+            username: [
+                isRequired(),
+                isMin(4),
+                isMax(20),
+                isExists('user', 'username', `company_id = ? AND id != ?`, [cid, id]),
+            ],
             name: isRequired(),
             role: isIn(UserRole),
         });
 
         if (Number(id)) {
-            const user = await getConnection()
-                .getRepository(User)
-                .createQueryBuilder('user')
-                .where('`id` = :id AND `company_id` = :cid', { id, cid })
-                .getOne();
+            const row = await getConnection()
+                .getCustomRepository(UserRepository)
+                .findUserOrError(id, cid);
 
-            if (!user) {
-                throw new UserNotFoundError();
-            }
-            user.name = data.name;
-            user.role = data.role;
-            await user.save();
+            row.username = data.username;
+            row.name = data.name;
+            row.role = data.role;
+            row.updatedAt = now;
+            await row.save();
             lastId = Number(data.id);
-            eventUser.emit('save.after', user);
+            eventUser.emit('save.after', row);
+            eventUser.emit('logout', row);
         } else {
-            const userEntity = new User();
-            userEntity.username = data.username;
-            userEntity.name = data.name;
-            userEntity.companyId = cid;
-            userEntity.role = data.role;
-            userEntity.setPassword(data.password);
-            const user = await userEntity.save();
+            const row = new User();
+            row.username = data.username;
+            row.name = data.name;
+            row.companyId = cid;
+            row.role = data.role;
+            row.setPassword(data.password);
+            row.updatedAt = now;
+            row.createdAt = now;
+            const user = await row.save();
             lastId = user.id;
-            eventUser.emit('save.after', userEntity);
+            eventUser.emit('save.after', row);
         }
 
         this.response.send({ id: lastId });
@@ -90,25 +108,20 @@ export default class UserController extends BaseController {
         const id = this.request.params.id;
         const data = this.request.body;
         const cid = this.user.companyId;
+        const now = moment().format('YYYY-MM-DD HH:mm:ss');
 
-        const user = this.user;
-        if (!user.isSupervisor) {
-            throw new ForbiddenError();
-        }
+        this.checkUserIsSupervisor();
 
-        isValid(data, {
+        await isValid(data, {
             newPassword: [isRequired(), isMin(4), isMax(20)],
         });
 
         const row = await getConnection()
-            .getRepository(User)
-            .createQueryBuilder('user')
-            .where('`id` = :id AND `company_id` = :cid', { id, cid })
-            .getOne();
-        if (!row) {
-            throw new UserNotFoundError();
-        }
+            .getCustomRepository(UserRepository)
+            .findUserOrError(id, cid);
+
         row.setPassword(data.newPassword);
+        row.updatedAt = now;
         await row.save();
         eventUser.emit('logout', row);
         eventUser.emit('save.after', row);
@@ -119,24 +132,62 @@ export default class UserController extends BaseController {
         const id = this.request.params.id;
         const data = this.request.body;
         const cid = this.user.companyId;
-
-        const user = this.user;
-        if (!user.isSupervisor) {
-            throw new ForbiddenError();
-        }
+        const now = moment().format('YYYY-MM-DD HH:mm:ss');
+        this.checkUserIsSupervisor();
 
         const row = await getConnection()
-            .getRepository(User)
-            .createQueryBuilder('user')
-            .where('`id` = :id AND `company_id` = :cid', { id, cid })
-            .getOne();
-        if (!row) {
-            throw new UserNotFoundError();
-        }
+            .getCustomRepository(UserRepository)
+            .findUserOrError(id, cid);
         row.enabled = data.enabled === true;
+        row.updatedAt = now;
         await row.save();
         eventUser.emit('logout', row);
         eventUser.emit('save.after', row);
         this.response.sendStatus(StatusCode.NoContent);
+    }
+
+    public async resetLoginErrors() {
+        const id = this.request.params.id;
+        const cid = this.user.companyId;
+        const now = moment().format('YYYY-MM-DD HH:mm:ss');
+        this.checkUserIsSupervisor();
+
+        const row = await getConnection()
+            .getCustomRepository(UserRepository)
+            .findUserOrError(id, cid);
+        row.loginErrors = 0;
+        row.updatedAt = now;
+        await row.save();
+        eventUser.emit('save.after', row);
+        this.response.sendStatus(StatusCode.NoContent);
+    }
+
+    public async logLoginList() {
+        const id = Number(this.request.params.id);
+        const query = this.request.query;
+        const cid = this.user.companyId;
+        if (id !== this.user.id) {
+            this.checkUserIsSupervisor();
+        }
+
+        const paginate = await getConnection()
+            .getCustomRepository(LogUserLoginRepository)
+            .paginate('log', query, (buildQuery) => {
+                buildQuery.where('`user_id` = :id AND `company_id` = :cid', { id, cid }).addOrderBy('id', 'DESC');
+
+                if (query.ip) {
+                    buildQuery.andWhere('`ip` = :ip', { ip: query.ip });
+                }
+            });
+
+        await getConnection()
+            .getCustomRepository(IpsRepository)
+            .joinIps(paginate.rows, (ips, source) => {
+                source.ipInfo = ips;
+            });
+
+        this.response.send({
+            ...paginate,
+        });
     }
 }

@@ -15,6 +15,7 @@ import { setTimeout, clearTimeout } from 'timers';
 import { getConnection } from 'typeorm';
 import { Sticker } from '../../entity/Sticker';
 import { FailedError } from '../../exceptions/failed.error';
+import browserInfo from '../../support/browserInfo';
 
 interface ListenerEvents<T> {
     (event: string | symbol, listener: (...args: any[]) => void): T;
@@ -115,10 +116,17 @@ export default class CustomerRoom extends EventEmitter {
     public static async createTalk(ctoken: CustomerToken, nsp: IUser.Socket.Namespace) {
         const createdAt = moment();
         const talkEntity = new Talk();
+        const info = browserInfo(ctoken.socket.handshake.headers);
+        const userAgent = ctoken.socket.handshake.headers.userAgent || '';
+
         talkEntity.executiveId = 0;
         talkEntity.companyId = ctoken.customer.companyId;
         talkEntity.customerId = ctoken.customer.id;
         talkEntity.ip = ctoken.ip;
+        talkEntity.userAgent = userAgent;
+        talkEntity.device = info.device;
+        talkEntity.browser = `${info.browser} (${info.version})`;
+        talkEntity.os = `${info.os}(${info.osVersion})`;
         talkEntity.status = TalkStatus.Waiting;
         talkEntity.createdAt = createdAt.format('YYYY-MM-DD HH:mm:ss');
 

@@ -38,16 +38,22 @@ export const isIn = (enums: string[] | number[] | object): ValidationFunction =>
     return (value) => enumsArr.indexOf(value) >= 0 || '資料不正確';
 };
 
-export const isExists = (table: string, col?: string, where?: string, values?: any): ValidationFunction => {
+export const isExists = (table: string, col?: string, where?: string, values?: string[]): ValidationFunction => {
     return async (value, key) => {
         let sql = `SELECT count(1) AS c FROM \`${table}\` WHERE \`${key}\` = ? `;
         if (where) {
             sql += ` AND ${where}`;
         }
-        const res = values ? await getConnection().query(sql, values) : await getConnection().query(sql);
-        logger.info('xxx', res);
-
-        return true as any;
+        const params = [value, ...(values || [])];
+        logger.warn('xxx', params);
+        try {
+            const res: any = values ? await getConnection().query(sql, params) : await getConnection().query(sql);
+            const count = Number(res && res[0] ? res[0].c : 0);
+            logger.warn('>>>', res, count);
+            return count === 0 || '資料已存在';
+        } catch (e) {
+            return e.message;
+        }
     };
 };
 
@@ -69,7 +75,7 @@ export const isValid = async (data: any, setting: ValidationSetting) => {
                 }
                 return true;
             });
-            Promise.all(checks).finally(() => {
+            await Promise.all(checks).finally(() => {
                 if (errs.length > 0) {
                     errors[key] = errs;
                 }
@@ -77,8 +83,11 @@ export const isValid = async (data: any, setting: ValidationSetting) => {
         });
 
         Promise.all(allCheck).finally(() => {
+            logger.error(errors);
             if (Object.keys(errors).length !== 0) {
                 reject(new ValidationError().setErrors(errors));
+            } else {
+                resolve();
             }
         });
     });

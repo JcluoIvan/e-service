@@ -12,6 +12,7 @@ import { MessageRepository } from '../repository/MessageRepository';
 import { Talk } from '../entity/Talk';
 import { TalkNotFoundError } from '../exceptions/center.error';
 import { UnauthorizedEditMessageError, MessageNotFoundError } from '../exceptions/talk.error';
+import { IpsRepository } from '../repository/IpsRepository';
 
 const existsTalk = async (companyId: number, talkId: number) => {
     const nums = await getConnection()
@@ -72,6 +73,10 @@ export default class TalkController extends BaseController {
                     buildQuery.andWhere('talk.created_at <= :etime', { etime: qdata.etime });
                 }
 
+                if (qdata.ip) {
+                    buildQuery.andWhere('talk.ip = :ip', { ip: qdata.ip });
+                }
+
                 if (qdata.waitingOperator && qdata.waitingTime && !isNaN(qdata.waitingTime)) {
                     const whereSql =
                         qdata.waitingOperator === 'above' ? 'talk.time_waiting >= :time' : 'talk.time_waiting <= :time';
@@ -87,11 +92,18 @@ export default class TalkController extends BaseController {
                     const executiveId = user ? user.id : -1;
                     buildQuery.andWhere('talk.executive_id = :executiveId', { executiveId });
                 }
-                if (qdata.status && qdata.status !== 'all') {
-                    buildQuery.andWhere('talk.status = :status', { status: qdata.status });
+                if (qdata.status) {
+                    buildQuery.andWhere('talk.status IN (:...status)', { status: qdata.status });
+                } else {
+                    buildQuery.andWhere(' 0 ');
                 }
             });
-        this.response.send(res);
+        await getConnection()
+            .getCustomRepository(IpsRepository)
+            .joinIps(res.rows, (ips, source) => {
+                source.ipInfo = ips;
+            });
+        this.response.send({ ...res });
     }
 
     public async listAfterMessages() {

@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import logger from '../config/logger';
 import { Article } from './Article';
+import { Ips } from './IPS';
+import { LogUserLogin } from './LogUserLogin';
 
 export enum UserRole {
     /* 主管 */
@@ -79,23 +81,36 @@ export class User extends BaseEntity {
     })
     public enabled!: boolean;
 
-    @CreateDateColumn({
+    @Column({
+        type: 'integer',
+        name: 'login_errors',
+        default: 0,
+    })
+    public loginErrors!: number;
+
+    @Column({
         name: 'updated_at',
         nullable: true,
         default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public updatedAt!: string;
 
-    @CreateDateColumn({
+    @Column({
         name: 'created_at',
         nullable: true,
         default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public createdAt!: string;
 
     public articles!: Article[];
+
+    /* for join last log_user_login info */
+    public logLast!: LogUserLogin | null;
+
+    /* for join ips */
+    public ipInfo!: Ips | null;
 
     get imageUrl() {
         return this.image ? `${process.env.USER__IMAGE_URL}/${this.image}` : '';
@@ -103,6 +118,10 @@ export class User extends BaseEntity {
 
     get isSupervisor() {
         return this.role === UserRole.Supervisor;
+    }
+
+    get isErrorLocked() {
+        return this.loginErrors > 5;
     }
 
     public setPassword(password: string) {

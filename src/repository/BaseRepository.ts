@@ -1,11 +1,21 @@
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder, getConnection, BaseEntity } from 'typeorm';
 import logger from '../config/logger';
+type ObjectType<T> = new () => T;
 
 export interface PaginateData<T> {
     rows: T[];
     total: number;
     size: number;
     page: number;
+}
+
+export interface JoinData<O, R> {
+    orm: ObjectType<O>;
+    name?: string;
+    rows: R[];
+    col: string;
+    joinCol: string;
+    buildQuery?: (subQuery: SelectQueryBuilder<O>, values: any[]) => void;
 }
 
 export default class BaseRepository<T> extends Repository<T> {
@@ -36,5 +46,26 @@ export default class BaseRepository<T> extends Repository<T> {
             total,
             rows,
         };
+    }
+
+    public async joinHasOne<O = any, R = any>(joinData: JoinData<O, R>, cb: (model: O | null, row: R) => void) {
+        const { rows, col, name = null, joinCol, orm, buildQuery } = joinData;
+        const values = rows.map((row: any) => row[col]).filter((o) => o.value !== null);
+
+        const joinName = name || `join_${joinCol}`;
+        const query = getConnection()
+            .createQueryBuilder(orm as any, joinName)
+            .where(`${joinCol} IN (:...${joinName})`, { [joinName]: values });
+        if (buildQuery) {
+            buildQuery(query as any, values);
+        }
+
+        const res = await query.getMany();
+        const joins: any[] = [];
+        res.forEach((r: any) => (joins[r[joinCol]] = r));
+        rows.forEach((row: any) => {
+            const model = joins[row[col]];
+            cb(model, row);
+        });
     }
 }

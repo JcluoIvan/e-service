@@ -5,7 +5,6 @@ import { EventEmitter } from 'events';
 import { ipAddress } from '../../support';
 import { getConnection } from 'typeorm';
 import { Customer } from '../../entity/Customer';
-import logger from '../../config/logger';
 
 export interface CustomerData {
     companyId: number;
@@ -66,7 +65,7 @@ export default class CustomerToken extends EventEmitter {
 
         const customerEntity = new Customer();
         customerEntity.companyId = data.companyId;
-        customerEntity.key = data.key || generateToken(socket.handshake.address);
+        customerEntity.key = data.key || generateToken(ipAddress(socket.handshake));
         customerEntity.name = data.name || 'guest';
         const res = await customerEntity.save();
         return new CustomerToken(socket, res);
@@ -80,7 +79,7 @@ export default class CustomerToken extends EventEmitter {
         this.data = {
             customer,
             socket,
-            ip: ipAddress(socket.handshake.address),
+            ip: ipAddress(socket.handshake),
         };
     }
 
@@ -96,7 +95,7 @@ export default class CustomerToken extends EventEmitter {
             this.clearDestroyTimer();
         }
         this.data.socket = socket;
-        this.data.ip = ipAddress(socket.handshake.address);
+        this.data.ip = ipAddress(socket.handshake);
     }
 
     public destroy() {

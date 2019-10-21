@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { Customer } from './Customer';
 import { User } from './User';
 import { Message } from './Message';
+import { Ips } from './IPS';
 
 /**
  * 任務 (訪客加入系統後開始)
@@ -55,6 +56,30 @@ export class Talk extends BaseEntity {
     public ip!: string;
 
     @Column({
+        type: 'varchar',
+        length: 255,
+    })
+    public userAgent!: string;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+    })
+    public device!: string;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+    })
+    public browser!: string;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+    })
+    public os!: string;
+
+    @Column({
         type: 'enum',
         enum: TalkStatus,
     })
@@ -80,7 +105,7 @@ export class Talk extends BaseEntity {
         name: 'start_at',
         nullable: true,
         default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public startAt!: string;
 
@@ -88,15 +113,14 @@ export class Talk extends BaseEntity {
         name: 'closed_at',
         nullable: true,
         default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public closedAt!: string | null;
 
-    @CreateDateColumn({
+    @Column({
         name: 'created_at',
         nullable: true,
-        default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public createdAt!: string;
 
@@ -116,4 +140,6 @@ export class Talk extends BaseEntity {
     public customer!: Customer;
     /** for left join */
     public executive!: User;
+    /** for join ips */
+    public ipInfo!: Ips | null;
 }
