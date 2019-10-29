@@ -7,6 +7,7 @@ import logger from '../config/logger';
 import { eventArticle } from '../events/event-article';
 import { ArticleRepository } from '../repository/ArticleRepository';
 import { User } from '../entity/User';
+import moment = require('moment');
 
 const getAutoSend = (autoSend: any, def = AutoSend.None): AutoSend => {
     return (
@@ -61,6 +62,7 @@ export default class ArticleController extends BaseController {
         const cid = this.user.companyId;
         const id = this.request.params.id;
         const data = this.request.body;
+        const now = moment().format('YYYY-MM-DD HH:mm:ss');
         let lastId = 0;
         const autoSend = getAutoSend(data.autoSend);
         if (Number(id)) {
@@ -76,6 +78,7 @@ export default class ArticleController extends BaseController {
             articleEntity.autoSend = autoSend;
             articleEntity.name = data.name;
             articleEntity.content = data.content;
+            articleEntity.updatedAt = now;
             const article = await articleEntity.save();
             await getConnection()
                 .getCustomRepository(ArticleRepository)
@@ -91,6 +94,8 @@ export default class ArticleController extends BaseController {
             articleEntity.key = data.key;
             articleEntity.name = data.name;
             articleEntity.content = data.content;
+            articleEntity.updatedAt = now;
+            articleEntity.createdAt = now;
             const article = await articleEntity.save();
             await getConnection()
                 .getCustomRepository(ArticleRepository)
@@ -117,6 +122,7 @@ export default class ArticleController extends BaseController {
         if (articleEntity) {
             articleEntity.autoSend = autoSend;
             articleEntity.odr = odr;
+            articleEntity.updatedAt = moment().format('YYYY-MM-DD HH:mm:ss');
             const article = await articleEntity.save();
             await getConnection()
                 .getCustomRepository(ArticleRepository)

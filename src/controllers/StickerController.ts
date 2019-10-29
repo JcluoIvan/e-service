@@ -9,6 +9,7 @@ import { StickerRepository } from '../repository/StickerRepository';
 import { StatusCode } from '../exceptions';
 import { FailedError } from '../exceptions/failed.error';
 import { User } from '../entity/User';
+import moment = require('moment');
 
 const updateStickerOdr = async (user: User) => {
     await getConnection()
@@ -80,6 +81,8 @@ export default class StickerController extends BaseController {
         sticker.companyId = user.companyId;
         sticker.userId = user.id;
         sticker.image = filename;
+        sticker.updatedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+        sticker.createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
         await sticker.save();
         await updateStickerOdr(user);
         this.response.sendStatus(StatusCode.NoContent);
@@ -156,6 +159,8 @@ export default class StickerController extends BaseController {
         clone.companyId = user.companyId;
         clone.userId = user.id;
         clone.image = sticker.image;
+        clone.updatedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+        clone.createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
         await clone.save();
         await updateStickerOdr(user);
         this.response.sendStatus(StatusCode.NoContent);

@@ -2,7 +2,6 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
-    CreateDateColumn,
     OneToOne,
     JoinColumn,
     Unique,
@@ -72,19 +71,17 @@ export class Article extends BaseEntity {
     })
     public odr!: number;
 
-    @CreateDateColumn({
+    @Column({
         name: 'updated_at',
         nullable: true,
-        default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public updatedAt!: string;
 
-    @CreateDateColumn({
+    @Column({
         name: 'created_at',
         nullable: true,
-        default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public createdAt!: string;
 }

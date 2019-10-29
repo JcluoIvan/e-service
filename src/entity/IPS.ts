@@ -58,7 +58,7 @@ export class Ips extends BaseEntity {
         name: 'updated_at',
         nullable: true,
         default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public updatedAt!: string;
 }

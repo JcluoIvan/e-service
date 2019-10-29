@@ -71,11 +71,10 @@ export class Message extends BaseEntity {
     })
     public fileExists!: number;
 
-    @CreateDateColumn({
+    @Column({
         name: 'created_at',
         nullable: true,
-        default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public createdAt!: string;
 

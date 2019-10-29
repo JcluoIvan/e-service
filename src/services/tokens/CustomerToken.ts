@@ -5,6 +5,7 @@ import { EventEmitter } from 'events';
 import { ipAddress } from '../../support';
 import { getConnection } from 'typeorm';
 import { Customer } from '../../entity/Customer';
+import moment = require('moment');
 
 export interface CustomerData {
     companyId: number;
@@ -67,6 +68,7 @@ export default class CustomerToken extends EventEmitter {
         customerEntity.companyId = data.companyId;
         customerEntity.key = data.key || generateToken(ipAddress(socket.handshake));
         customerEntity.name = data.name || 'guest';
+        customerEntity.createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
         const res = await customerEntity.save();
         return new CustomerToken(socket, res);
     }

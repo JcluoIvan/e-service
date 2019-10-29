@@ -29,19 +29,17 @@ export class Company extends BaseEntity {
     })
     public namespace!: string;
 
-    @CreateDateColumn({
+    @Column({
         name: 'updated_at',
         nullable: true,
-        default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public updatedAt!: string;
 
-    @CreateDateColumn({
+    @Column({
         name: 'created_at',
         nullable: true,
-        default: null,
-        type: 'datetime',
+        type: 'timestamp',
     })
     public createdAt!: string;
 }
