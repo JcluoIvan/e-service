@@ -83,14 +83,14 @@ export const isValid = async (data: any, setting: ValidationSetting) => {
                 }
                 return true;
             });
-            await Promise.all(checks).finally(() => {
+            await Promise.all(checks).then(() => {
                 if (errs.length > 0) {
                     errors[key] = errs;
                 }
             });
         });
 
-        Promise.all(allCheck).finally(() => {
+        Promise.all(allCheck).then(() => {
             logger.error(errors);
             if (Object.keys(errors).length !== 0) {
                 reject(new ValidationError().setErrors(errors));

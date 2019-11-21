@@ -18,7 +18,7 @@ export default class SystemConfigController extends BaseController {
             config = SystemConfig.newSystemConfig(user.companyId);
         }
         this.response.send({
-            ...config.value,
+            ...config.getValue(),
         });
     }
 
@@ -40,9 +40,10 @@ export default class SystemConfigController extends BaseController {
             config.createdAt = now;
         }
         config.updatedAt = now;
-
-        config.value.talkConnectLimit = Number(data.talkConnectLimit);
-
+        config.updateValue((value) => {
+            value.talkConnectLimit = Number(data.talkConnectLimit);
+            return value;
+        });
         await config.save();
         eventSystemConfig.emit('save.after', config);
 

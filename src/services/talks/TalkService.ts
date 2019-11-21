@@ -161,7 +161,7 @@ export default class CenterService extends BaseService {
         });
 
         ctoken.socket.on('disconnect', () => {
-            talk.onDisconnected(this.userService.systemConfig.value.talkConnectLimit);
+            talk.onDisconnected(this.userService.systemConfig.getValue().talkConnectLimit);
         });
 
         this.updateTalk(talk);

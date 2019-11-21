@@ -11,11 +11,10 @@ const defaultValue: ValueType = {
 
 @Entity()
 export class SystemConfig extends BaseEntity {
-
     public static newSystemConfig(companyId: number) {
         const config = new SystemConfig();
         config.companyId = companyId;
-        config.value = {...defaultValue};
+        config.setValue({ ...defaultValue });
         return config;
     }
     @Column({
@@ -27,10 +26,10 @@ export class SystemConfig extends BaseEntity {
     public companyId!: number;
 
     @Column({
-        type: 'json',
-        default: JSON.stringify(defaultValue),
+        type: 'text',
+        default: '{}',
     })
-    public value!: ValueType;
+    public value!: string;
 
     @Column({
         name: 'updated_at',
@@ -47,4 +46,19 @@ export class SystemConfig extends BaseEntity {
         type: 'timestamp',
     })
     public createdAt!: string;
+
+    public updateValue(cb: (value: ValueType) => ValueType) {
+        this.setValue(cb(this.getValue()));
+    }
+
+    public setValue(data: ValueType) {
+        this.value = JSON.stringify(data);
+    }
+
+    public getValue(): ValueType {
+        return {
+            ...defaultValue,
+            ...JSON.parse(this.value),
+        };
+    }
 }
