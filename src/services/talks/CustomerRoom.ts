@@ -403,25 +403,45 @@ export default class CustomerRoom extends EventEmitter {
 
     /**
      * Guest 斷線
+     * @param connectLimit 連線小於 n 秒時，自動結案
      */
-    public onDisconnected() {
+    public onDisconnected(connectLimit: number = 0) {
         const disconnectedAt = moment().valueOf();
         this.data.disconnectedAt = disconnectedAt;
         this.nsp.emit('talks/talk-offline', { talkId: this.id, disconnectedAt });
         this.clearDestroyTimer();
+
+        const connectTime = disconnectedAt - moment(this.talk.createdAt).valueOf();
+
+        /** 開啟客服後斷線時間小於 n 秒時，自動結案 */
+        if (connectLimit > 0 && connectTime < connectLimit * 1000) {
+            const connectSeconds = Math.floor(connectTime / 100) / 10;
+            this.close(`訪客連線時間 ${connectSeconds}秒, 系統自動結案`, true);
+        }
+
         // this.data.destroyTimer = setTimeout(() => this.close(), CLOSE_DELAY);
     }
 
-    public async close() {
+    /**
+     *
+     * @param remark 備註
+     */
+    /**
+     *
+     * @param remark 備註
+     * @param force 強制結案, 並且不會設為「未服務」狀態 (供系統自動結案用)
+     */
+    public async close(remark = '', force = false) {
         const closedAt = moment();
         this.ctoken.socket.disconnect();
         this.emit('close');
-
+        this.talk.remark = remark;
         this.talk.closedAt = closedAt.format('YYYY-MM-DD HH:mm:ss');
 
-        if (this.talk.startAt) {
+        if (this.talk.startAt || force) {
             this.talk.status = TalkStatus.Closed;
             this.talk.timeService = this.talk.intClosedAt - this.talk.intStartAt;
+            this.talk.remark = remark;
             this.talk = await this.talk.save();
             this.data.executive = null;
             this.nsp.emit('talks/talk-closed', { talkId: this.id, closedAt: closedAt.valueOf() });
@@ -429,6 +449,7 @@ export default class CustomerRoom extends EventEmitter {
             const talkId = this.id;
             this.talk.status = TalkStatus.Unprocessed;
             this.talk.timeWaiting = this.talk.timeWaiting = this.talk.intClosedAt - this.talk.intCreatedAt;
+            this.talk.remark = remark;
             this.talk = await this.talk.save();
             this.nsp.emit('talks/talk-unprocessed', { talkId, closedAt: closedAt.valueOf() });
         }

@@ -20,7 +20,7 @@ export default class RoomService extends EventEmitter {
 
     private data: Data;
 
-    /** 是否開啟 (開啟狀態才能經由系統自動分配顧客) */
+    /** 是否開啟 (開啟狀態才能經由系統自動分配訪客) */
 
     get isOnline() {
         return this.data.utoken.isOnline;

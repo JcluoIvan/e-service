@@ -135,16 +135,16 @@ export default class CenterService extends BaseService {
     }
 
     /**
-     * 顧客連線
+     * 訪客連線
      * ＊ 這裡只處理 socket 的事件綁定 ＊
      * @param ctoken CustomerToken
-     * @param citem 顧客資料
+     * @param citem 訪客資料
      */
     private async onCustomerConnected(ctoken: CustomerToken) {
         /* 建立 talk */
         const talk = await this.findOrCreateTalk(ctoken);
 
-        /* 顧客主動中斷 (已完成) */
+        /* 訪客主動中斷 (已完成) */
         ctoken.socket.on('talks/close', () => {
             talk.close();
             ctoken.destroy();
@@ -161,7 +161,7 @@ export default class CenterService extends BaseService {
         });
 
         ctoken.socket.on('disconnect', () => {
-            talk.onDisconnected();
+            talk.onDisconnected(this.userService.systemConfig.value.talkConnectLimit);
         });
 
         this.updateTalk(talk);
@@ -337,7 +337,10 @@ export default class CenterService extends BaseService {
     }
 
     private updateTalks(socket: IUser.Socket | IUser.Socket.Namespace) {
-        socket.emit('talks/talks', this.talks.map((t) => t.toJson()));
+        socket.emit(
+            'talks/talks',
+            this.talks.map((t) => t.toJson()),
+        );
     }
 
     private updateTalk(talk: CustomerRoom) {
@@ -345,7 +348,10 @@ export default class CenterService extends BaseService {
     }
 
     private updateRooms(io: IUser.Socket | IUser.Socket.Namespace) {
-        io.emit('talks/rooms', this.rooms.map((r) => r.toJson()));
+        io.emit(
+            'talks/rooms',
+            this.rooms.map((r) => r.toJson()),
+        );
     }
 
     private updateWatchers(utoken: UserToken, detail = false) {
@@ -357,7 +363,10 @@ export default class CenterService extends BaseService {
                 utoken.socket.emit('talks/talk-detail', talk.toJsonDetail(utoken));
             });
         }
-        utoken.socket.emit('talks/talk-watchers', talks.map((t) => t.id));
+        utoken.socket.emit(
+            'talks/talk-watchers',
+            talks.map((t) => t.id),
+        );
     }
 
     private async findOrGenerateRoom(utoken: UserToken) {

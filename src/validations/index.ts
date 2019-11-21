@@ -1,4 +1,4 @@
-import { isObject, isString } from 'util';
+import { isObject, isString, isNumber } from 'util';
 import { ValidationError } from '../exceptions/validation.error';
 import logger from '../config/logger';
 import { getConnection } from 'typeorm';
@@ -9,8 +9,8 @@ export interface ValidationSetting {
     [key: string]: ValidationFunction | ValidationFunction[];
 }
 
-export const isRequired = (): ValidationFunction => {
-    return (value, key) => !!value || '此欄位需為必填';
+export const isRequired = (ext: any[] = []): ValidationFunction => {
+    return (value, key) => ext.indexOf(value) >= 0 || !!value || '此欄位需為必填';
 };
 
 export const isWhen = (when: ValidationFunction, rules: ValidationFunction[]): ValidationFunction => {
@@ -23,14 +23,22 @@ export const isWhen = (when: ValidationFunction, rules: ValidationFunction[]): V
     };
 };
 
-export const isMax = (max: number): ValidationFunction => {
-    return (value) =>
-        isString(value) ? value.length <= max || `長度不能超過 ${max} 個字元` : value < max || `不得大於 ${max}`;
+export const isNum = (): ValidationFunction => {
+    return (value) => !isNaN(value) || '必需為數字';
 };
 
-export const isMin = (min: number): ValidationFunction => {
+export const isMax = (max: number, type: StringConstructor | NumberConstructor = String): ValidationFunction => {
     return (value) =>
-        isString(value) ? value.length >= min || `長度不能少於 ${min} 個字元` : value < min || `不得小於 ${min}`;
+        type === String
+            ? value.length <= max || `長度不能超過 ${max} 個字元`
+            : Number(value) <= max || `不得大於 ${max}`;
+};
+
+export const isMin = (min: number, type: StringConstructor | NumberConstructor = String): ValidationFunction => {
+    return (value) =>
+        type === String
+            ? value.length >= min || `長度不能少於 ${min} 個字元`
+            : Number(value) >= min || `不得小於 ${min}`;
 };
 
 export const isIn = (enums: string[] | number[] | object): ValidationFunction => {

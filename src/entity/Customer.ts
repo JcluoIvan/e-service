@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BaseEntity } 
 import * as moment from 'moment';
 
 /**
- * 任務 (顧客加入系統後開始)
+ * 任務 (訪客加入系統後開始)
  */
 @Entity()
 export class Customer extends BaseEntity {
@@ -19,7 +19,7 @@ export class Customer extends BaseEntity {
     public companyId!: number;
 
     /**
-     * 顧客 id (由介接系統提供, 非必填)
+     * 訪客 id (由介接系統提供, 非必填)
      */
     @Column({
         type: 'varchar',
@@ -30,7 +30,7 @@ export class Customer extends BaseEntity {
     public key!: string;
 
     /**
-     * 顧客 name (顧客加入系統填寫的名稱)
+     * 訪客 name (訪客加入系統填寫的名稱)
      */
     @Column({
         type: 'varchar',

@@ -215,7 +215,7 @@ declare namespace IUser {
             /** 更新任務列表 */
             (event: 'talks/talk-queue', data: IES.Talks.Talk[]): boolean;
 
-            /** 捨棄 talk (未開始 & 顧客離線且 session 過期) */
+            /** 捨棄 talk (未開始 & 訪客離線且 session 過期) */
             (event: 'talks/talk-unprocessed', data: { talkId: number }): boolean;
 
             /** 更新 watch talks */
@@ -267,7 +267,7 @@ declare namespace IUser {
                 listener: ISK.ListenerHandle<{ talkId: number; lastMessageId: number }, IES.Talks.Message[]>,
             ): T;
 
-            /** 開始服務顧客 */
+            /** 開始服務訪客 */
             (event: 'talks/talk-start', listener: ISK.ListenerHandle<{ talkId: number }>): T;
 
             /** 轉接 */

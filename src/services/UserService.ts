@@ -9,6 +9,8 @@ import { Company } from '../entity/Company';
 import * as moment from 'moment';
 import { ResponseCode } from '../exceptions';
 import { eventUser } from '../events/event-user';
+import { SystemConfig } from '../entity/SystemConfig';
+import { eventSystemConfig } from '../events/event-system-config';
 
 // interface EmitterEvents {
 //     (event: string | symbol, ...args: any[]): boolean;
@@ -32,6 +34,7 @@ interface Data {
     users: Map<number, UserToken>;
     company: Company;
     nsp: IUser.Socket.Namespace;
+    systemConfig: SystemConfig;
 }
 
 export default class UserService extends EventEmitter {
@@ -51,15 +54,21 @@ export default class UserService extends EventEmitter {
         return this.data.nsp;
     }
 
+    get systemConfig() {
+        return this.data.systemConfig;
+    }
+
     constructor(company: Company, nsp: IUser.Socket.Namespace) {
         super();
         this.data = {
             users: new Map<number, UserToken>(),
             nsp,
             company,
+            systemConfig: SystemConfig.newSystemConfig(company.id),
         };
+        this.reloadSystemConfig();
 
-        nsp.on('connect', async (socket: IUser.Socket) => {
+        this.nsp.on('connect', async (socket: IUser.Socket) => {
             socket.on('login', async ({ username, password, token }, res) => {
                 try {
                     const utoken = await this.findUserToken(socket, { username, password, token });
@@ -98,6 +107,10 @@ export default class UserService extends EventEmitter {
                 find.destroy();
             }
         });
+
+        eventSystemConfig.on('save.after', (config) => {
+            this.data.systemConfig = config;
+        });
     }
 
     public findById(id: number) {
@@ -106,6 +119,14 @@ export default class UserService extends EventEmitter {
 
     public findByToken(token: string) {
         return this.users.find((u) => u.token === token) || null;
+    }
+
+    public async reloadSystemConfig() {
+        const config = await getConnection()
+            .createQueryBuilder(SystemConfig, 'sc')
+            .where('company_id = :cid', { cid: this.company.id })
+            .getOne();
+        this.data.systemConfig = config || SystemConfig.newSystemConfig(this.company.id);
     }
 
     private broadcastUsers() {

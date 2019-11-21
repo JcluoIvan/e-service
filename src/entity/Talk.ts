@@ -102,6 +102,14 @@ export class Talk extends BaseEntity {
     public timeService!: number;
 
     @Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        default: null,
+    })
+    public remark!: string;
+
+    @Column({
         name: 'start_at',
         nullable: true,
         default: null,

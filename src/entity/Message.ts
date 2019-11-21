@@ -47,7 +47,7 @@ export class Message extends BaseEntity {
     })
     public content!: string;
 
-    /** 0 代表顧客發言 */
+    /** 0 代表訪客發言 */
     @Column({
         name: 'user_id',
         type: 'integer',
